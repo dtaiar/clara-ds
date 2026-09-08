@@ -90,6 +90,14 @@ export default defineConfig({
             // overrides this — the base value exists only so the token
             // is declared and typed before a theme is applied.
             primary: { value: "{colors.neutral.900}" },
+            // Hover/pressed: added for the Button component. Named in
+            // docs/foundations/token-model.md's Level 2 vocabulary but not
+            // implemented until Button gave a real interactive element that
+            // demonstrated the need (a clickable primary action needs mouse
+            // feedback, not only the keyboard-only focus-visible ring). See
+            // the "Button interaction states" decision in that document.
+            primaryHover: { value: "{colors.neutral.900}" },
+            primaryPressed: { value: "{colors.neutral.900}" },
             onPrimary: { value: "{colors.neutral.0}" },
           },
           focus: {
@@ -165,6 +173,13 @@ export default defineConfig({
         colors: {
           action: {
             primary: { value: "{colors.accent}" },
+            // Hover/pressed: accent darkened ~15% / ~30% (uniform RGB
+            // scaling), same placeholder-quality methodology as the accent
+            // values themselves — not a validated contrast pair. See the
+            // Button interaction-states decision in
+            // docs/foundations/token-model.md.
+            primaryHover: { value: "#D08D1E" },
+            primaryPressed: { value: "#AC7419" },
             onPrimary: { value: "{colors.neutral.900}" },
           },
           focus: {
@@ -183,6 +198,8 @@ export default defineConfig({
         colors: {
           action: {
             primary: { value: "{colors.accent}" },
+            primaryHover: { value: "#4D4DB6" },
+            primaryPressed: { value: "#404096" },
             onPrimary: { value: "{colors.neutral.0}" },
           },
           focus: {

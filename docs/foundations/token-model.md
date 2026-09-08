@@ -155,6 +155,16 @@ color.action.primaryPressed
 color.action.onPrimary
 ```
 
+### Decision — Button interaction states demonstrate the need for hover/pressed
+
+**Decided (implementation decision, not an ADR — see `.claude/skills/building-clara/SKILL.md`, decision threshold):** `color.action.primaryHover` and `color.action.primaryPressed` are now implemented as semantic tokens, declared under `theme.extend.semanticTokens` (Core default, neutral, overridden per theme) in `app/panda.config.ts`, matching the pattern already used for `action.primary`/`action.onPrimary`.
+
+This vocabulary was already named above but left unimplemented until Clara had a real interactive element that demonstrated the need. The Slice 01 checkpoint's original button (`app/src/App.tsx`, before this decision) was a static theme-toggle proof and only exercised `focus-visible`, which is keyboard-only. Extracting a real `Button` component (`app/src/components/Button.tsx`) that a mouse user actually clicks exposed the gap: without hover/pressed feedback, a filled primary action gives no visual response to a pointer user at all. That is the demonstrated need — not convention. No other action-color roles (e.g. secondary, disabled) were added; nothing beyond what Button's own click/hover/press interaction requires.
+
+Values chosen: each theme's `primaryHover`/`primaryPressed` are the theme's own `accent` primitive, uniformly darkened (~15% / ~30% RGB scaling) — `explorer`: `#D08D1E` / `#AC7419` from `#F5A623`; `alternate`: `#4D4DB6` / `#404096` from `#5B5BD6`. This is a placeholder methodology, not a validated contrast pair, consistent with this document's existing position that exact color values are not yet approved (see "What remains intentionally open"). Revisit when Clara defines a real contrast-validation step for themes.
+
+Observed evidence (built and verified in `app/`, per the evidence model in `docs/project/foundation.md`): after `panda codegen`, the generated `ColorPalette`/token vocabulary includes `action.primaryHover` and `action.primaryPressed` alongside the existing `action.primary`/`action.onPrimary`. `npm run build` and `npm run lint` both pass. At runtime (Playwright, built preview), the Button's computed `background-color` changed correctly on `:hover` and `:active` in both `explorer` and `alternate` themes, matching each theme's declared hover/pressed values, with no change to `focus-visible` behavior (still `color.focus.ring`, unchanged from the ADR-002 checkpoint).
+
 ### Focus
 
 ```text

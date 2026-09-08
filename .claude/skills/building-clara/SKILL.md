@@ -119,6 +119,22 @@ Humans approve:
 
 If a task crosses one of these boundaries, stop and surface the decision.
 
+### Decision threshold
+
+Not every implementation choice requires an ADR.
+
+Create or propose an architectural decision only when the choice:
+
+- changes Clara's public system contract;
+- changes a system boundary or responsibility;
+- affects governance or source-of-truth ownership;
+- creates a meaningful long-term constraint;
+- or would be costly or consequential to reverse.
+
+Implementation mechanisms that preserve the existing Clara contract can be decided and documented within the relevant implementation or foundation documentation.
+
+Do not create ADRs merely because a framework offers multiple implementation options.
+
 ## Definition of done
 
 A task is not complete only because code exists.

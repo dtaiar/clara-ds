@@ -71,19 +71,17 @@ Clara Core should not define `blue` as synonymous with `primary`. A Theme may ch
 
 Use a small consistent scale rather than values named for individual components.
 
-```text
-space.0
-space.1
-space.2
-space.3
-space.4
-space.6
-space.8
-space.12
-...
-```
+### Decision — smallest demonstrated scale, Clara-owned
 
-Exact values are not approved yet.
+**Decided (implementation decision, not an ADR — see `.claude/skills/building-clara/SKILL.md`, decision threshold):** Slice 01 implements only the spacing values the checkpoint (`app/src/App.tsx`) actually demonstrates: `space.2` (`0.5rem`), `space.4` (`1rem`), `space.8` (`2rem`), used for container gap/padding and button `paddingX`/`paddingY`. No other values (`0`, `1`, `3`, `6`, `12`, …) are declared. Adding them ahead of a demonstrated need was considered and rejected as anticipatory, conflicting with rule 6 (smallest testable implementation).
+
+These are declared under `theme.extend.tokens.spacing` in `app/panda.config.ts`, the same pattern already used for color and typography primitives.
+
+This decision depends on a broader one: **ADR-003** (`decisions/ADR-003-panda-token-vocabulary-ownership.md`) stops Clara from inheriting `@pandacss/preset-panda`'s default theme, so that `space.2/4/8` are genuinely the only spacing tokens in the generated system — not three named values sitting inside Panda's much larger inherited scale. Read ADR-003 first; this entry only records the specific values chosen within the boundary it sets.
+
+Semantic spacing roles (e.g. `spacing.stack.sm`) are not introduced at this stage. Spacing values don't yet carry the kind of theme-resolved product meaning that justified a semantic layer for color (`action.primary`) or typography (`textStyle: "heading"`) — a semantic spacing vocabulary should wait for a pattern or recipe layer to demonstrate a recurring, named relationship worth abstracting.
+
+Observed evidence (built and verified in `app/`, per the evidence model in `docs/project/foundation.md`): after regenerating (`panda codegen`), the generated `SpacingToken` TypeScript union is exactly `"2" | "4" | "8" | "-2" | "-4" | "-8"` (the negative variants are Panda's own auto-derived margin counterparts, not separately declared). `npm run build` passes. At runtime (Playwright, built preview), the container's computed `gap` and `padding` and the button's computed `padding-left`/`padding-top` matched `space.4`/`space.8`/`space.4`/`space.2` exactly, unchanged from before the vocabulary-ownership change — confirming this was a source-of-truth change, not a visual one.
 
 ### Radius
 
@@ -94,6 +92,10 @@ radius.md
 radius.lg
 radius.full
 ```
+
+### Decision — one migration value only, not a radius model
+
+**Decided (implementation decision, not an ADR):** Only `radius.md` (`0.375rem`) is declared, under `theme.extend.tokens.radii`. This exists solely because ADR-003 dropping `@pandacss/preset-panda` would otherwise silently break the checkpoint's button (`borderRadius: "md"`) — verified before implementing: with no `radii` category defined at all, Panda generated `border-radius: md` (invalid CSS, silently ignored by browsers, no build error). `md`'s value was set to match what Panda's default preset previously resolved for that key, so this is a migration requirement, not a new design decision — a full radius scale (`none`/`sm`/`lg`/`full`, and whether radius needs semantic roles) remains open and undecided, to be designed when a real need demonstrates it, consistent with this document's evaluation question about unused/unjustified tokens.
 
 ### Typography primitives
 
@@ -261,12 +263,15 @@ We are **not** deciding yet:
 
 - Clara's own permanent brand primary;
 - exact color values;
-- exact spacing values;
+- a complete spacing scale beyond the three values Slice 01 demonstrates (`space.2/4/8` — see decision above);
+- a radius scale beyond the single migration value (`radius.md` — see decision above);
 - complete type scale;
 - dark mode;
 - all status colors;
 - motion system;
 - elevation system;
+- breakpoints;
+- token enforcement (`strictTokens`/`strictPropertyValues` — see ADR-003);
 - whether Style Dictionary is necessary;
 - a public theme configuration API;
 - automated accessibility validation.

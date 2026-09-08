@@ -1,6 +1,8 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { css } from "../styled-system/css";
 import { Button } from "./components/Button";
+import { Input } from "./components/Input";
 
 // Slice 01 checkpoint only — not the Explorer UI. Proves that a single
 // element can switch between two Panda themes at runtime while resolving
@@ -11,6 +13,13 @@ type ThemeName = (typeof THEME_NAMES)[number];
 
 export function App() {
   const [theme, setTheme] = useState<ThemeName>("explorer");
+  const [intent, setIntent] = useState("");
+  const [submittedIntent, setSubmittedIntent] = useState<string | null>(null);
+
+  function handleIntentSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmittedIntent(intent);
+  }
 
   return (
     <div
@@ -50,6 +59,34 @@ export function App() {
       >
         Sample element — toggle theme
       </Button>
+
+      {/* Input checkpoint — still not the Explorer UI. Tests the second
+          Clara Knowledge experiment (docs/knowledge/input.json). Input
+          itself owns no label and no submit behavior; both are composed
+          here with plain native elements (label/form), not new Clara
+          components — see input.json's `unresolved` for the open
+          Field/Label ownership question this checkpoint deliberately does
+          not resolve. */}
+      <form
+        onSubmit={handleIntentSubmit}
+        className={css({ display: "flex", flexDirection: "column", gap: "2" })}
+      >
+        <label htmlFor="intent-input" className={css({ textStyle: "label" })}>
+          Describe what you need
+        </label>
+        <Input
+          id="intent-input"
+          value={intent}
+          onChange={(event) => setIntent(event.target.value)}
+          placeholder="I need users to confirm before deleting something"
+        />
+        <Button type="submit">Submit intent</Button>
+        {submittedIntent !== null && (
+          <p className={css({ textStyle: "supporting" })}>
+            Submitted: {submittedIntent}
+          </p>
+        )}
+      </form>
     </div>
   );
 }

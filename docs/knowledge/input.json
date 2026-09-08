@@ -1,0 +1,195 @@
+{
+  "component": "Input",
+  "recordStatus": "experimental — second Clara Knowledge record; shape is a hypothesis to evaluate against button.json, not a committed schema. This record was written after an explicit human-review correction: an accessible name being required does NOT imply Input must own and render a Label. See `unresolved` for the resulting open question, and `compositionDependencies` for how accessibility is actually achieved in this pass.",
+  "slice": "01-intent-first-discovery",
+  "sourceOfTruth": {
+    "implementation": "app/src/components/Input.tsx",
+    "checkpointComposition": "app/src/App.tsx (label + form composition around Input, not part of the component)",
+    "tokenDecision": "app/panda.config.ts — colors.neutral.300, semanticTokens.colors.surface.default, semanticTokens.colors.border.default",
+    "sliceDefinition": "docs/slices/01-intent-first-discovery.md",
+    "priorRecord": "docs/knowledge/button.json"
+  },
+
+  "purpose": {
+    "status": "decision",
+    "value": "A single-line entry point for a short natural-language product intent.",
+    "note": "Derives from docs/slices/01-intent-first-discovery.md's example intent and suggestion model (short phrases, not documents), plus the approved human-review decision to use <input>, not <textarea>."
+  },
+
+  "whenToUse": {
+    "status": "decision",
+    "value": [
+      "The Explorer's single intent-entry surface (Slice 01) — a short, free-text natural-language query."
+    ],
+    "note": "Same source as purpose. Slice 01 only demonstrates this one use; do not generalize to 'any text input' from a single instance."
+  },
+
+  "whenNotToUse": {
+    "status": "hypothesis",
+    "value": [
+      "Structured or bounded values (email, phone, quantity, date) — nothing about this component validates or formats input, and its purpose is natural-language intent, not typed data.",
+      "Multi-paragraph or multi-line content — a native <input> cannot hold a newline; use is scoped to single-line text by the primitive itself, not a Clara-added restriction.",
+      "Any field expecting per-keystroke validation feedback or an error state — none is implemented."
+    ],
+    "note": "Reasoned exclusions from the approved scope (see human-review 'Approved' list), not independently tested against an alternative UI."
+  },
+
+  "variants": {
+    "status": "decision",
+    "value": ["default"],
+    "note": "Descriptive, not configurable: there is no `variant` prop. Same shape as button.json's variants field, but this is now the second component in a row with exactly one look — the field remains untested for a component that actually has more than one variant. Do not read this field's reusability as proven yet, only its shape."
+  },
+
+  "sizes": {
+    "status": "decision",
+    "value": ["default"],
+    "note": "Descriptive, not configurable — same caveat as variants above."
+  },
+
+  "states": [
+    { "name": "default", "status": "implemented" },
+    {
+      "name": "focus-visible",
+      "status": "observed",
+      "note": "Consumes color.focus.ring — the same token Button uses. Verified via keyboard Tab navigation (not programmatic .focus(), which does not reliably trigger :focus-visible in Chromium) in both explorer and alternate themes: 2px solid outline, theme-resolved color. First real evidence this token generalizes across components."
+    },
+    {
+      "name": "hover",
+      "status": "unresolved",
+      "note": "Deliberately not implemented. Evaluated and judged weakly justified: unlike Button, a text field's cursor already signals interactivity, so pointer feedback on hover was not treated as a demonstrated need. Different conclusion from Button's hover, not an oversight."
+    },
+    {
+      "name": "disabled",
+      "status": "unresolved",
+      "note": "Available only because Input forwards native <input> attributes wholesale (ComponentPropsWithoutRef<\"input\">). No Clara-specific disabled styling exists. Same shape of gap as button.json's disabled state."
+    },
+    {
+      "name": "readOnly",
+      "status": "unresolved",
+      "note": "Same situation as disabled — available via native forwarding only, no designed treatment. Button has no equivalent native attribute, so this state has no precedent in button.json."
+    },
+    {
+      "name": "populated / empty",
+      "status": "unresolved",
+      "note": "Not a CSS/visual state of Input itself — no empty-state styling is implemented, and whether the entered value is empty is tracked by the consumer (see valueOwnership), not by this component. Recorded here only to make explicit that it was considered and rejected as a component-owned state, not silently omitted."
+    }
+  ],
+
+  "props": {
+    "status": "implemented",
+    "value": [
+      { "name": "value / onChange / defaultValue", "type": "native <input> value props", "required": false, "description": "Forwarded natively, unrestricted. Input owns no state of its own — see valueOwnership for what this does and does not guarantee." },
+      { "name": "placeholder", "type": "string", "required": false, "description": "Forwarded natively. Not an accessible name and not a label substitute — see accessibility." },
+      { "name": "id", "type": "string", "required": false, "description": "Forwarded natively. Required in practice to pair with an external <label htmlFor> — see compositionDependencies." },
+      { "name": "type", "type": "string", "required": false, "default": "text", "description": "Defaults to \"text\" the same way Button defaults to type=\"button\" — a default value, not a lock. A consumer can override it (e.g. type=\"email\"), which changes native behavior in ways the documented purpose does not describe." },
+      { "name": "style", "type": "CSSProperties", "required": false, "description": "Forwarded natively, unrestricted — bypasses semantic tokens entirely, same escape hatch already flagged in button.json." },
+      { "name": "aria-label / aria-labelledby", "type": "string", "required": false, "description": "Forwarded natively, unrestricted. Can supply an accessible name without a visible <label> — see accessibility and compositionDependencies." },
+      { "name": "...rest", "type": "native <input> element attributes", "required": false, "description": "All other standard <input> attributes pass through unchanged." }
+    ],
+    "note": "Unlike Button, Input narrows nothing — not even one field. ComponentPropsWithoutRef<\"input\"> passes through exactly as-is; app/src/components/Input.tsx (export type InputProps = ComponentPropsWithoutRef<\"input\">) is the exact and complete source of truth."
+  },
+
+  "valueOwnership": {
+    "status": "observed",
+    "value": "Input does not own or manage value state. The Slice 01 checkpoint (app/src/App.tsx) uses it as a controlled input (useState + value + onChange), which is product-implementation evidence for that one usage — not a component guarantee that Input requires or prefers controlled usage.",
+    "note": "EXPERIMENTAL FIELD — Button has no equivalent because Button is stateless; this concept has no home in button.json's shape. Because value/onChange/defaultValue all forward natively and unrestricted, uncontrolled usage (defaultValue + ref, no value/onChange) is also technically possible and equally unverified. Nothing in Input's type prevents a consumer from supplying both value and defaultValue simultaneously, which is a contradictory combination React does not handle cleanly — this is a real, currently open risk, not silently resolved. Do not read Clara as establishing a controlled-only convention from this one checkpoint."
+  },
+
+  "compositionDependencies": [
+    {
+      "behavior": "Input receives an accessible name.",
+      "requiresComposition": "A consumer-supplied <label htmlFor={id}> paired with this input's id (as in the Slice 01 checkpoint), or aria-label/aria-labelledby passed through native forwarding.",
+      "status": "observed",
+      "note": "Verified via Playwright's accessibility-tree-based getByLabel(\"Describe what you need\") locator against app/src/App.tsx's <label htmlFor=\"intent-input\"> + <Input id=\"intent-input\"> pairing. Input renders no label of its own by design — see this record's recordStatus and unresolved."
+    },
+    {
+      "behavior": "Pressing Enter while focused in Input submits the entered intent.",
+      "requiresComposition": "A native <form> wrapping Input and a submit-triggering control (the checkpoint uses a Clara Button with type=\"submit\").",
+      "status": "observed",
+      "note": "Verified in the built preview (Playwright): pressing Enter inside the checkpoint's <form> triggered its onSubmit handler. This is native <form> behavior, not Input behavior — Input has no keydown/keyup handling of its own. Outside a <form>, Enter does nothing. Do not document 'Enter submits' as an intrinsic Input capability."
+    }
+  ],
+
+  "contentExpectations": {
+    "status": "decision",
+    "value": "Short, single-sentence natural-language product intent (e.g. \"I need users to confirm before deleting something\") — not structured/formatted data (email, phone, numeric) and not multi-paragraph content.",
+    "note": "EXPERIMENTAL FIELD — no equivalent in button.json; Button's usage (a fixed visible label) had no comparable 'what should the value contain' question. Derived directly from docs/slices/01-intent-first-discovery.md's example intents and suggestion model, not generic input convention. Not enforced by the executable API — no maxLength, no pattern, no format validation. A consumer can type arbitrary long or structured text and nothing will stop them; see knownLimitations."
+  },
+
+  "accessibility": [
+    { "claim": "Renders a native <input type=\"text\"> element.", "status": "decision" },
+    {
+      "claim": "Input does not render or own a <label>. An accessible name must come from consumer composition.",
+      "status": "decision",
+      "note": "Direct result of the human-review correction: 'an input needs an accessible name' does not imply 'Clara Input must own and render Label.' This is a deliberate scope decision for this pass, not an oversight — see unresolved for the open architecture question."
+    },
+    {
+      "claim": "When composed with a paired <label htmlFor>, the accessible name resolves correctly.",
+      "status": "observed",
+      "note": "See compositionDependencies — same evidence, referenced here for the accessibility-specific claim."
+    },
+    {
+      "claim": "Placeholder text is not an accessible name and is not a substitute for a visible/associated label.",
+      "status": "decision",
+      "note": "Stated explicitly because this is a well-documented, common real-world anti-pattern — recorded here to preempt an agent (or human) treating the placeholder prop as sufficient for accessibility."
+    },
+    {
+      "claim": "Visible focus-visible outline using color.focus.ring, 2px solid, theme-resolved.",
+      "status": "observed",
+      "note": "Verified via keyboard-driven computed style check in both themes — same method as button.json."
+    },
+    {
+      "claim": "Cannot hold a newline character in its value (single-line guarantee).",
+      "status": "observed",
+      "note": "Verified: filling the input with a string containing an embedded newline produced a value with the newline stripped. This is native <input> platform behavior, not something Clara implemented — it is what justified choosing <input> over <textarea> in the human-review decision."
+    },
+    {
+      "claim": "Keyboard activation (typing) and screen-reader announcement behavior beyond the accessible-name check above.",
+      "status": "unresolved",
+      "note": "Not independently tested with a screen reader or assistive technology. Do not read the other accessibility claims here as a compliance statement — same caveat as button.json."
+    }
+  ],
+
+  "semanticTokens": {
+    "status": "observed",
+    "value": [
+      "color.surface.default",
+      "color.border.default",
+      "color.focus.ring",
+      "space.4",
+      "space.2",
+      "radii.md",
+      "textStyle: body"
+    ],
+    "note": "color.focus.ring is confirmed reused from Button — first cross-component token-reuse evidence. color.surface.default and color.border.default are newly implemented for Input (see app/panda.config.ts) and confirmed declared once at Core level, not per-theme (:root in generated CSS, unchanged across [data-panda-theme=explorer]/[data-panda-theme=alternate] blocks) — verified via Playwright computed-style checks in both themes. No color.text.* role was implemented: typed value color and placeholder color currently inherit browser/UA default. That is a deliberate deferral (see knownLimitations), not an unnoticed gap — token-model.md documents a wider Surface/Text/Border vocabulary than Input actually needed."
+  },
+
+  "typography": {
+    "status": "decision",
+    "value": "textStyle: body",
+    "note": "Reused Clara's existing 'body' text style for the typed value, consistent with token-model.md describing body as the default reading size. The checkpoint's paired <label> uses textStyle: label — that styling lives in App.tsx's composition, not in Input itself."
+  },
+
+  "knownLimitations": {
+    "status": "decision",
+    "value": [
+      "No owned accessible name — Input renders no <label>. A consumer who forgets to pair one ships an inaccessible field; nothing in the type system prevents this.",
+      "No multiline, error/validation state, character limit, variants, sizes, or dedicated disabled/readOnly styling — none implemented, matching the approved Slice 01 scope.",
+      "No helper-text slot or programmatic helper/error association (aria-describedby) — composition-level if ever needed, not designed here.",
+      "Typed value color and placeholder color are not token-driven yet — no color.text.* semantic role exists; both render via browser/UA default.",
+      "type=\"text\" is a default, not a lock — a consumer can override it via native prop forwarding, changing Input into a differently-behaved native control despite the documented natural-language-intent purpose.",
+      "The native `style` and `className` props pass through unrestricted, and so do `aria-label`/`aria-labelledby` — same escape hatches already known from Button, now recurring for a second component.",
+      "surface.default and border.default values (#ffffff, #d4d4d4) are unvalidated placeholders — no contrast check performed, same caveat already recorded for Button's hover/pressed colors."
+    ]
+  },
+
+  "unresolved": [
+    "Whether Clara should eventually model field semantics as (A) a self-contained Input/TextField that owns its own label, (B) composable primitives (Field + Label + Input + SupportingText), or (C) another structure discovered through later components. Explicitly not decided here per human review — this record only shows what a bare-primitive Input plus ad hoc composition looks like for one checkpoint.",
+    "Whether Input's public contract should stay full native-attribute-surface (current approach, matching Button) or move to a curated subset that closes the style/aria-*/type escape hatches — the same repository-wide question button.json already flagged, now with a second data point recurring identically.",
+    "Whether color.text.* semantic roles (primary for typed value, muted for placeholder) should be added — deferred pending a demonstrated need beyond browser default.",
+    "Whether controlled-only should ever become a Clara-wide convention for stateful components — not decided from one component. Input currently permits both controlled and uncontrolled usage via native forwarding, with an open risk that a consumer could supply a contradictory value+defaultValue combination.",
+    "Whether `compositionDependencies` and `valueOwnership` deserve to be permanent Knowledge field shapes, or were only useful for this one record — flagged for the eventual schema discussion (see docs/knowledge/README.md), not decided here.",
+    "Whether `variants`/`sizes` as a field shape is actually useful, given two components in a row have produced only a single degenerate value for each — still unresolved by this record.",
+    "antiPatterns, relatedComponents, examples, and compositionRules are not included, for the same reason as button.json: no eval loop, no third component to relate to, no built Explorer surface yet."
+  ]
+}

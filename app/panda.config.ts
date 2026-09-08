@@ -31,6 +31,15 @@ export default defineConfig({
         colors: {
           neutral: {
             0: { value: "#ffffff" },
+            // Added for Input (Vertical Slice 01, second Clara Knowledge
+            // experiment): a resting border needs a value visible against
+            // `neutral.0` without the harshness of `neutral.900`. No prior
+            // component needed a third neutral stop — Button has no
+            // border. Placeholder-quality value (same caveat as the Button
+            // hover/pressed colors in docs/foundations/token-model.md):
+            // not a validated contrast pair, just the smallest new
+            // primitive this component's border demonstrably requires.
+            300: { value: "#d4d4d4" },
             900: { value: "#111111" },
           },
         },
@@ -102,6 +111,27 @@ export default defineConfig({
           },
           focus: {
             ring: { value: "{colors.neutral.900}" },
+          },
+          // surface.* / border.* — added for Input, the first Clara
+          // component that needs a container background and a resting
+          // boundary. `token-model.md` documents a wider conceptual
+          // Surface/Border/Text vocabulary (surface.subtle/raised,
+          // border.subtle/strong, text.primary/secondary/muted/inverse);
+          // only the two roles Input's own recipe actually consumes are
+          // declared here. The rest remains undecided — do not treat this
+          // as the full vocabulary being adopted. See
+          // docs/knowledge/input.json for the reasoning, including why
+          // `text.*` was deliberately NOT added in this pass.
+          //
+          // Declared once at Core level, not per-theme: a form field's
+          // background/border are neutral UI chrome, not a brand-identity
+          // role like `action.primary` — no need demonstrated yet for a
+          // theme to override these.
+          surface: {
+            default: { value: "{colors.neutral.0}" },
+          },
+          border: {
+            default: { value: "{colors.neutral.300}" },
           },
         },
       },

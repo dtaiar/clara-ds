@@ -1,10 +1,10 @@
 # Clara Knowledge — experimental records
 
-**Status:** Experimental — first test of Clara Knowledge, not a committed architecture.
+**Status:** Experimental — second test of Clara Knowledge, still not a committed architecture.
 
-`docs/architecture/overview.md` lists "how should Clara Knowledge be structured, and in which data format?" as an open question. This directory does not answer that question. It holds one real record — [`button.json`](./button.json) — written to learn from actual consumption before any schema is proposed as a repository-wide standard.
+`docs/architecture/overview.md` lists "how should Clara Knowledge be structured, and in which data format?" as an open question. This directory does not answer that question. It holds two real records — [`button.json`](./button.json) and [`input.json`](./input.json) — written to learn from actual consumption before any schema is proposed as a repository-wide standard.
 
-Do not treat `button.json`'s shape as a template to copy for the next component without re-evaluating it. If a second component's Knowledge needs the same fields, that is evidence worth acting on; if it needs different fields, that is evidence too. Either way, committing to a shared schema is a Knowledge-architecture decision and should be raised for human review — not inferred from one file.
+Do not treat either record's shape as a template to copy for the next component without re-evaluating it. `input.json` reused most of `button.json`'s field shapes but also added two experimental fields with no Button equivalent — `valueOwnership` and `compositionDependencies` — because Input has real state ownership and context-dependent behavior (accessible name, Enter-to-submit) that Button's shape had no way to express honestly. See `docs/project/learning-log.md` for the full comparison. Two records show some fields generalize and some don't; that is evidence worth acting on, not yet enough to commit to a shared schema. Any such decision should be raised for human review.
 
 ## Status / provenance values
 
@@ -18,8 +18,23 @@ Each significant field in a record carries a `status`, so a human or agent consu
 | `hypothesis` | A reasoned guess, not sourced from a decision and not tested. |
 | `unresolved` | An explicitly open question, deliberately left unanswered rather than guessed at. |
 
-This is a minimal, single-pass design, not a finalized provenance model. Known gap: `decision` currently collapses decisions that predate this task (e.g. "Button renders a native `<button>`") with decisions made during this task (e.g. "hover/pressed tokens now exist"). A `note` field carries that nuance in free text for now. Whether that collapse is a problem is itself something to evaluate once a second Knowledge record exists.
+This is a minimal, single-pass design, not a finalized provenance model. Known gap: `decision` currently collapses decisions that predate this task (e.g. "Button renders a native `<button>`") with decisions made during this task (e.g. "hover/pressed tokens now exist"). A `note` field carries that nuance in free text for now.
+
+## `status` vs. `origin`
+
+The second Knowledge record surfaced a real instance of the gap above: `input.json` originally marked "Placeholder text is not an accessible name" as `status: "decision"`, but that is not a Clara decision — it comes from web/accessibility semantics Clara did not choose and cannot change. `button.json` had the same problem for "Accessible name equals the visible text label by default": the *mapping* from text content to accessible name is a web-platform rule, even though Clara's own decision (requiring `children`) sits just upstream of it.
+
+`status` answers *how established* a claim is (decided / implemented / observed / hypothesis / unresolved). It does not answer *where the claim's truth comes from*. Conflating the two let a platform fact read as if Clara had authored or chosen it.
+
+Both records now carry an experimental `origin` field on the specific claims where this ambiguity was found — currently two values, `"clara"` (implied by the field's absence — the default) or `"web-platform"` (stated explicitly). It is applied narrowly, only to claims where a reader could otherwise mistake a platform fact for a Clara decision — not blanket-applied across every claim in either record. This is the smallest correction that fixed the specific misrepresentation found; it is not a proposal for a general provenance/origin taxonomy (external reference, product/slice, implementation, etc.), and whether two values are enough, or whether `origin` deserves the same treatment on claims where it wasn't applied, is left unresolved in `input.json`.
 
 ## What's deliberately not here
 
-`button.json` omits `antiPatterns`, `relatedComponents`, `examples`, and `compositionRules` — not because the schema forgot them, but because Button doesn't yet have real evidence for any of them (no eval loop has run, no second component exists to relate to, no built Explorer surface to draw examples from). Populating them now would be invented content presented as knowledge. See the record's own `unresolved` field.
+Both records omit `antiPatterns`, `relatedComponents`, `examples`, and `compositionRules` — not because the schema forgot them, but because there still isn't real evidence for any of them (no eval loop has run, only two components exist to relate to each other, no built Explorer surface to draw examples from). Populating them now would be invented content presented as knowledge. See each record's own `unresolved` field.
+
+## New field shapes introduced by `input.json`
+
+- **`valueOwnership`** — Button is stateless and has no equivalent concept. Input forwards `value`/`onChange`/`defaultValue` natively and owns no state itself; this field records that a controlled-usage checkpoint is product evidence, not a component guarantee, and flags the unresolved risk of a consumer supplying a contradictory `value`+`defaultValue` pair.
+- **`compositionDependencies`** — records behaviors (accessible name, Enter-to-submit) that only exist because of how a consumer composes Input with other elements (a paired `<label>`, a wrapping `<form>`), not because Input implements them itself. Folding this into `accessibility` prose was tried first and judged likely to bury a genuinely different kind of claim: "X is true only if the consumer also does Y" is conditional and structural, not a property of the component alone.
+
+Whether these two fields are reusable beyond Input, or were only useful for this one record, is itself recorded as unresolved in `input.json` — not decided here.

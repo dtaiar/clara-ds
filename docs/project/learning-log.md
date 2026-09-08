@@ -56,3 +56,58 @@ This is one observed project sequence. It is not evidence that the same failure 
 ### Next falsification step
 
 Use a semantically richer second component from Vertical Slice 01 — the intent input/textarea — to test whether the Button Knowledge shape survives requirements such as label relationships, helper text, multiline behavior, validation/error semantics, required/optional behavior, state, and accessibility relationships.
+
+## 2026-09-08 — Input + second Clara Knowledge record
+
+### Context
+
+Built `Input` (`app/src/components/Input.tsx`), Clara's second real component, and `docs/knowledge/input.json`, its second experimental Knowledge record. A human-review step preceded implementation and made one explicit correction to the prior analysis: "an input needs an accessible name" does not imply "Clara Input must own and render Label." That correction shaped the implementation — Input stays a bare native wrapper; the Slice 01 checkpoint (`app/src/App.tsx`) composes a plain `<label htmlFor>` and `<form>` around it, not new Clara components.
+
+### Observed learnings
+
+1. **Button's accessible-name mechanism does not generalize.** Button's required `children` prop guaranteed an accessible name "for free." `<input>` has no content model, so no equivalent free guarantee exists. This is a structural break in the Button Knowledge shape's assumptions, not just new content — it required a component-architecture decision (deferred to human review rather than silently resolved) about whether Clara should ever own label association.
+
+2. **Some Button Knowledge fields generalize in shape but stayed content-empty.** `variants` and `sizes` again resolved to a single descriptive, non-configurable value. Two components in a row now show this — the field shape is unstressed: we still don't know how it behaves once a real component has more than one variant.
+
+3. **`states` does not transfer as a fixed vocabulary.** Button's states (hover/pressed/focus-visible/disabled) don't map onto Input. Input has no "pressed" state, has a weaker case for hover (evaluated and explicitly rejected — a text cursor already signals interactivity, unlike a button), and raises a new question Button never had: whether "populated vs. empty" counts as a component state at all (concluded: no — it's application-level, not implemented as component styling).
+
+4. **A component can have behavior that is real, verifiable, and still not its own.** Enter-to-submit and the accessible-name relationship are both genuinely true of the Slice 01 checkpoint, and both were runtime-verified — but neither is true of Input in isolation; both depend on how a consumer composes it (a wrapping `<form>` with a submit control; a paired `<label>`). Neither `button.json`'s `accessibility` shape nor its `props` shape had a way to say "true only if the consumer also does Y" without either burying the condition in note-prose or making the claim misleadingly unconditional. `input.json` added an experimental `compositionDependencies` field to make this explicit and structured rather than solving it silently.
+
+5. **Value/state ownership is a new knowledge dimension Button never needed.** Button is stateless. Input inherently carries a value that must be owned somewhere. `input.json` added an experimental `valueOwnership` field to record that the checkpoint's controlled usage is product evidence for one usage, not a component guarantee — and to keep visible an unresolved risk (a consumer could pass a contradictory `value`+`defaultValue` pair) rather than silently deciding Clara is controlled-only.
+
+6. **A second component needed real semantic tokens Button never touched.** `token-model.md` documented `surface.*`/`text.*`/`border.*` conceptually; nothing beyond `action.*`/`focus.ring` existed in `panda.config.ts` until Input. Only `surface.default` and `border.default` were implemented (plus one new `neutral.300` primitive) — `text.*` was deliberately deferred; typed value and placeholder color still inherit browser default. This confirms `semanticTokens` as a Knowledge field-shape generalizes, but the specific token vocabulary a component needs does not — each component determines its own subset of the conceptual model, and implementing that subset is a prerequisite step, not just documentation.
+
+7. **The native-prop-forwarding question is now recurring evidence, not a one-off.** `button.json` flagged `style`/`aria-label`/`aria-labelledby` as an unresolved escape hatch. `input.json` hit the identical question a second time, plus a new instance of the same pattern (`type="text"` was originally a default, not a lock — a consumer could override it via forwarding, same as Button's `type="button"`). Two independent components producing the same open question is more meaningful than either alone. *(The `type` instance was subsequently closed — see the 2026-09-08 correction entry below. `style`/`aria-*` remain open on both components.)*
+
+8. **`color.focus.ring` reuse is the first confirmed cross-component token.** Unlike the other findings above, this is a case where Button's specific content — not just its field shape — genuinely transferred. Verified via keyboard-driven computed-style checks in both themes.
+
+### Current interpretation
+
+Two Knowledge records now show a consistent pattern: field *shapes* like `props`, `accessibility`, `semanticTokens`, `knownLimitations`, `unresolved`, and per-field status/provenance generalize reasonably well across two structurally different components. Content and, in Input's case, some field *shapes themselves* (`valueOwnership`, `compositionDependencies`) do not generalize from Button alone — they had to be discovered by building a second, different kind of component. This supports the project's working interpretation (an executable contract and a Knowledge contract are distinct surfaces that can drift) and extends it: a Knowledge record's *shape* can also drift from a prior component's shape, for reasons as legitimate as content drift.
+
+### Next falsification step
+
+Two components is enough to show some fields generalize and some don't, but not enough to formalize a schema — `variants`/`sizes` remain untested for a real multi-value case, and `compositionDependencies`/`valueOwnership` are single-record hypotheses. A third component that either (a) has genuine variants/sizes, or (b) is a compound/multi-part component (exercising `relatedComponents`/`compositionRules`, still empty in both records so far), would be the next meaningful stress test.
+
+## 2026-09-08 — Two focused corrections: executable `type` narrowing, and Knowledge provenance (status vs. origin)
+
+### Context
+
+A human-review pass on `input.json` against the executable API found two issues before merging PR #6: (1) `InputProps` forwarded `type` unrestricted, so `<Input type="email" />` compiled — contradicting the approved native-`<input type="text">` decision and leaving it undocumented-only rather than enforced; (2) some Knowledge claims used `status: "decision"` for facts that are not Clara decisions at all (e.g. "placeholder is not an accessible name" — a web-platform/accessibility-semantics fact Clara did not choose).
+
+### What changed
+
+- `InputProps` is now `Omit<ComponentPropsWithoutRef<"input">, "type">`. Verified as a compile error (`@ts-expect-error` on `<Input type="email" />`) and confirmed the rendered element's `type` attribute is still `"text"` at runtime. This narrows exactly one field, for a different reason than Button's `children` narrowing (Button's guaranteed an accessible-name source; Input's makes an already-approved primitive decision executable) — not a repository-wide native-prop policy.
+- `input.json` and `docs/knowledge/README.md` gained an experimental `origin` field on select claims (`"clara"` implied by absence, or `"web-platform"` stated explicitly), applied only where a claim's status could otherwise be misread as Clara authorship of a platform fact.
+- The "placeholder is not an accessible name" claim went from asserted (`status: "decision"`, no test behind it) to actually verified: a new Playwright check confirms the input's computed accessible name matches the paired `<label>` text and does not match the placeholder text, via `getByRole("textbox", { name })`. Status changed to `observed`, origin `web-platform`.
+- `button.json`'s "accessible name equals visible text by default" claim had the identical problem (status `decision` for a platform accessible-name-computation rule). Corrected in place: status → `implemented` (children is required in code; no dedicated accessible-name check was run for Button the way one now has for Input), `origin: "web-platform"` added, with a note pointing to this finding. Button's record was not otherwise re-audited claim-by-claim — that's recorded as a new `unresolved` item rather than assumed clean.
+
+### Observed learning
+
+**`status` and `origin` are separable knowledge dimensions.** `status` answers how established a claim is; it does not answer where the claim's truth comes from. Two records now show the same conflation independently (Input's placeholder claim, Button's accessible-name claim) — a claim inherited unchanged from a prior record's shape doesn't get re-examined for this unless something forces the comparison, which is itself worth noting: Knowledge drift can survive a first review and only surface on a second, differently-shaped component.
+
+This is not being treated as a finalized Knowledge architecture. `origin` was applied narrowly (only where ambiguity was actually found, not blanket across every claim), uses only two values (`clara` / `web-platform`), and several open questions were recorded rather than resolved: whether narrow application is the right call, whether two origin values are enough once a third kind of source appears (an external library, a published guideline distinct from raw platform behavior), and whether `status`+`origin` together are sufficient or still incomplete. See `input.json`'s `unresolved` and `docs/knowledge/README.md`.
+
+### Next falsification step (updated)
+
+Unchanged from above — a third, structurally different component remains the next meaningful stress test. This correction adds one more question for that component to test: does it need a third `origin` value, or do `clara`/`web-platform` continue to cover what's needed?

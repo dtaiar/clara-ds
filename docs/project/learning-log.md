@@ -155,6 +155,16 @@ Clicking a suggestion sets the intent Input's value to that suggestion's text; i
 
 Not verified: screen-reader/assistive-technology behavior (same caveat already recorded in `button.json`/`input.json`); no automated accessibility or contrast audit was run.
 
+### Visual evidence
+
+Captured from the built preview (the same Playwright pass used for the verification above), before merge, as inspectable record of this milestone — see `docs/evidence/explorer-entry-surface/`:
+
+- [`desktop-explorer-theme.png`](../evidence/explorer-entry-surface/desktop-explorer-theme.png) — 1280×800, `explorer` theme.
+- [`mobile-explorer-theme.png`](../evidence/explorer-entry-surface/mobile-explorer-theme.png) — 360×740, `explorer` theme.
+- [`desktop-alternate-theme.png`](../evidence/explorer-entry-surface/desktop-alternate-theme.png) — 1280×800, `alternate` theme, as evidence that the same composition resolves through a second Clara Theme with no component or layout change.
+
+These screenshots demonstrate composition/rendering only. They are not accessibility evidence, not responsive-system validation, and not visual-quality benchmark results — see the verification caveats above for what was and was not independently checked.
+
 ### Next falsification step
 
 The next component or surface that needs a bounded width, a breakpoint-dependent structural change (not just reflow), or a muted/secondary text color is the next real test of gaps 1–3 above — they should stay unresolved until then rather than being speculatively designed now.

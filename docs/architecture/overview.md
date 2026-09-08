@@ -109,7 +109,7 @@ The central hypothesis is that this knowledge can support multiple interfaces ra
 
 ### Open questions
 
-- What is the canonical data format?
+- How should Clara Knowledge be structured, and in which data format?
 - Which knowledge should be authored manually and which can be derived from code?
 - How do we represent uncertainty or missing guidance?
 - How do patterns and templates reference components without becoming brittle?
@@ -182,11 +182,11 @@ The key governance question is not only “did the agent make a mistake?” but 
 
 The project currently proposes this hierarchy:
 
-1. **Git repository** — canonical project artifacts, implementation, structured knowledge, experiment inputs/results, and architecture decisions.
+1. **Git repository** — primary source for project artifacts, implementation, structured knowledge, experiment inputs/results, and architecture decisions.
 2. **Generated/derived interfaces** — Docs, CLI output, JSON/API representations.
 3. **Notion/project notes** — research synthesis, working notes, portfolio narrative, and supporting project management.
 
-The intention is to avoid maintaining separate canonical rule sets for designers, developers, and agents.
+The intention is to avoid maintaining a separate source of truth for designers, developers, and agents.
 
 ## Governance model
 

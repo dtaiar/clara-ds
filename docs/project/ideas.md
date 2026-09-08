@@ -9,8 +9,11 @@ Ideas in this document are intentionally allowed to be incomplete, revised, or d
 
 ## IDEA-001 — Clara Explorer / conversational Design System portal
 
-**Status:** Explore later  
-**Captured:** 2026-09-08
+**Status:** Adopted into Vertical Slice 01 — see [`docs/slices/01-intent-first-discovery.md`](../slices/01-intent-first-discovery.md)  
+**Captured:** 2026-09-08  
+**Adopted:** 2026-09-08
+
+**Status history:** Captured as an exploratory idea (Explore later). Adopted as the first product surface for Vertical Slice 01 once that slice was defined. The sections below are preserved as originally written to keep the reasoning that led to adoption visible.
 
 ### Spark
 
@@ -96,8 +99,14 @@ Natural language may be one interface for that capability, alongside search, fil
 - How do we make provenance visible so users know why Clara recommends something?
 - Could the portal itself become part of the first vertical slice, or would that prematurely expand scope?
 
-### Current decision
+### Original decision (at capture, 2026-09-08)
 
 **Document, do not commit to building yet.**
 
 When the first vertical slice is defined, evaluate whether a minimal version of this portal is a useful test surface. If it adds unnecessary scope, preserve the idea for a later phase or discard it.
+
+### Current status (2026-09-08)
+
+Vertical Slice 01 — Intent-first Discovery has since been defined, and it names a minimal Clara Explorer as its first product surface. This resolves the open question above ("Could the portal itself become part of the first vertical slice?") in favor of adoption: a minimal Explorer is in scope for Slice 01, as described in [`docs/slices/01-intent-first-discovery.md`](../slices/01-intent-first-discovery.md).
+
+This idea is no longer "explore later." Its scope for Slice 01 is deliberately small — the entry surface only (typography, intent input, primary action, suggestion chips, layout) — not the full conversational-portal concept sketched above. The broader portal concept (patterns/templates results, provenance display, full CLI parity) remains an idea to revisit once the slice's minimal surface is built and evaluated, not committed scope today.

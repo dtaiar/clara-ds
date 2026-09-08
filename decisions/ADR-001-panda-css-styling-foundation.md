@@ -54,7 +54,7 @@ pattern / product composition
 
 Panda's generated artifacts and specification output create an opportunity to expose parts of the styling system to documentation and machine consumers without manually recreating the same information.
 
-Whether Panda's spec output becomes part of Clara's canonical knowledge architecture is still a hypothesis to test.
+Whether Panda's spec output becomes part of Clara's system knowledge is still a hypothesis to test.
 
 ### 4. It keeps the styling engine separate from Clara intelligence
 

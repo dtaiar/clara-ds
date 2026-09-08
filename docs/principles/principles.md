@@ -9,7 +9,7 @@ These principles are working hypotheses. They express how we currently believe C
 
 ## 1. One source, multiple consumers
 
-Humans and agents should access the same underlying system knowledge rather than requiring separate canonical documentation.
+Humans and agents should access the same underlying system knowledge rather than each relying on a separate source of truth.
 
 Different interfaces are expected. Different truths are not.
 
@@ -67,7 +67,7 @@ Reusable system decisions remain reviewable and human-owned.
 
 Clara should describe product and system knowledge in a way that is not dependent on the quirks of one AI provider.
 
-Provider-specific adapters may exist, but they should not become the canonical knowledge model.
+Provider-specific adapters may exist, but they should not become the source of truth for Clara's knowledge model.
 
 **We will challenge this principle by asking:** Under matched tasks and Clara versions, can different capable agents discover and use the system without provider-specific rewrites?
 

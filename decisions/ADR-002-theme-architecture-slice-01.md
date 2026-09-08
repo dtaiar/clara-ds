@@ -79,6 +79,16 @@ Declaring a theme under the `themes` key in `panda.config.ts` makes it available
 - If Panda's static-inclusion behavior (`staticCss.themes`) changes in a future Panda version, or proves fragile in practice, this ADR's implementation note should be revisited and Panda's current documentation re-checked before assuming this decision still holds.
 - If evidence from Slice 01 shows agents or humans conflating Clara's theme contract with Panda's mechanism despite this boundary, that is evidence the separation needs to be enforced more explicitly (e.g. a wrapping abstraction), not just documented.
 
+## Observed implementation evidence
+
+Recorded from building the Slice 01 checkpoint (`app/`), per the evidence model in `docs/project/foundation.md`. These are observations from this one implementation pass, not generalized claims about Panda, about agent behavior, or about future config changes.
+
+- A `themes` block nested inside `theme` (i.e. `theme: { extend: {...}, themes: {...} }`) produced no theme artifacts: no `styled-system/themes` output, no `[data-panda-theme]` selectors in the generated CSS.
+- With that nesting, `npm run build` still succeeded — no error or warning was produced.
+- Moving `themes` to a top-level key, a sibling of `theme` in `panda.config.ts`, produced the expected `styled-system/themes` output and `[data-panda-theme="explorer"]` / `[data-panda-theme="alternate"]` blocks in the generated CSS.
+- Both theme expressions were verified at runtime in a browser (Playwright, against the built output): toggling the sample element's `data-panda-theme` attribute between `explorer` and `alternate` changed its rendered background and text color to the values each theme's semantic tokens resolve to.
+- The sample component's own generated CSS rules (`.bg_action\.primary`, `.c_action\.onPrimary`, the focus-ring utilities) referenced only CSS custom properties (e.g. `var(--colors-action-primary)`); the raw theme color values appeared only inside the two `[data-panda-theme="…"]` blocks that define those properties.
+
 ## References
 
 - Panda CSS — Multi-Theme Tokens: https://panda-css.com/docs/guides/multiple-themes

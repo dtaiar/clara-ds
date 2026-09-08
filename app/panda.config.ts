@@ -12,6 +12,16 @@ import { defineConfig } from "@pandacss/dev";
 export default defineConfig({
   preflight: true,
 
+  // Panda infrastructure only — no theme vocabulary. See
+  // decisions/ADR-003-panda-token-vocabulary-ownership.md. Without this,
+  // Panda silently auto-adds `@pandacss/preset-panda`, which ships its own
+  // opinionated theme (a 26-family color palette, a 0–96 spacing scale, a
+  // full type scale, etc.) merged in alongside Clara's primitives below.
+  // `@pandacss/preset-base` alone still provides Panda's utilities,
+  // conditions, and layout patterns (stack/hstack/grid/etc.) — none of
+  // that is theme vocabulary, all of it is retained.
+  presets: ["@pandacss/preset-base"],
+
   include: ["./src/**/*.{js,jsx,ts,tsx}"],
   exclude: [],
 
@@ -23,6 +33,27 @@ export default defineConfig({
             0: { value: "#ffffff" },
             900: { value: "#111111" },
           },
+        },
+        // Spacing primitives (Level 1) — see ADR-003 and
+        // docs/foundations/token-model.md. Only the three values the
+        // Slice 01 checkpoint actually demonstrates (App.tsx: container
+        // gap/padding, button paddingX/paddingY). Resolved values match
+        // what Panda's default preset previously supplied for these same
+        // keys, so this is a vocabulary-ownership change, not a visual
+        // one. Do not add more until a real surface need justifies it.
+        spacing: {
+          2: { value: "0.5rem" },
+          4: { value: "1rem" },
+          8: { value: "2rem" },
+        },
+        // Radius — migration requirement only, not a Clara radius model.
+        // `md` is the single value the existing checkpoint's button
+        // (`borderRadius: "md"`) depends on; without it, dropping
+        // preset-panda leaves that utility unresolved and Panda emits
+        // invalid CSS (`border-radius: md`) with no build error. See
+        // ADR-003. A real radius scale is out of scope for this change.
+        radii: {
+          md: { value: "0.375rem" },
         },
         // Typography primitives (Level 1). A single neutral system font
         // stack — Clara has not approved a brand typeface, so this is a

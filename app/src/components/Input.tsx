@@ -6,16 +6,26 @@ import { css, cx } from "../../styled-system/css";
 // docs/knowledge/input.json — this file should stay in sync with that
 // record, not duplicate its reasoning in comments here.
 //
-// Unlike Button, Input does NOT narrow or add any prop. Button's
-// accessible name came for free from a required `children` prop; an
-// `<input>` has no content model, so there is no equivalent guarantee
-// this component can make on its own. Clara has not yet decided whether
-// an Input-shaped component should own label association (see
-// input.json's `unresolved`) — so this implementation deliberately stays
-// a bare native wrapper and leaves accessible-name composition (a
+// Input narrows exactly one native prop: `type`. The approved component
+// decision is a native <input type="text">, not a textarea — but forwarding
+// `type` unrestricted (as originally implemented) let a consumer render
+// <Input type="email" /> or type="password", contradicting that decision
+// and leaving the executable contract unable to actually guarantee it.
+// Omitting `type` closes that gap. This is a narrow, component-specific
+// contract correction, not a general native-prop-forwarding policy — every
+// other native <input> attribute, including style and the aria-label/
+// aria-labelledby override, still passes through unrestricted; see
+// input.json's knownLimitations for what that implies.
+//
+// This is a different narrowing than Button's: Button required `children`
+// to guarantee an accessible-name source. Input has no content model, so
+// no equivalent exists here — Clara has not yet decided whether an
+// Input-shaped component should own label association at all (see
+// input.json's `unresolved`). This implementation stays a bare native
+// wrapper otherwise, leaving accessible-name composition (a
 // `<label htmlFor>` paired with this input's `id`) to the consumer, the
 // same way the current checkpoint (app/src/App.tsx) composes it.
-export type InputProps = ComponentPropsWithoutRef<"input">;
+export type InputProps = Omit<ComponentPropsWithoutRef<"input">, "type">;
 
 const inputStyle = css({
   textStyle: "body",

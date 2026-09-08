@@ -77,7 +77,7 @@ Built `Input` (`app/src/components/Input.tsx`), Clara's second real component, a
 
 6. **A second component needed real semantic tokens Button never touched.** `token-model.md` documented `surface.*`/`text.*`/`border.*` conceptually; nothing beyond `action.*`/`focus.ring` existed in `panda.config.ts` until Input. Only `surface.default` and `border.default` were implemented (plus one new `neutral.300` primitive) — `text.*` was deliberately deferred; typed value and placeholder color still inherit browser default. This confirms `semanticTokens` as a Knowledge field-shape generalizes, but the specific token vocabulary a component needs does not — each component determines its own subset of the conceptual model, and implementing that subset is a prerequisite step, not just documentation.
 
-7. **The native-prop-forwarding question is now recurring evidence, not a one-off.** `button.json` flagged `style`/`aria-label`/`aria-labelledby` as an unresolved escape hatch. `input.json` hits the identical question a second time, plus a new instance of the same pattern (`type="text"` is a default, not a lock — a consumer can override it via forwarding, same as Button's `type="button"`). Two independent components producing the same open question is more meaningful than either alone, but this record still treats it as surfaced, not decided.
+7. **The native-prop-forwarding question is now recurring evidence, not a one-off.** `button.json` flagged `style`/`aria-label`/`aria-labelledby` as an unresolved escape hatch. `input.json` hit the identical question a second time, plus a new instance of the same pattern (`type="text"` was originally a default, not a lock — a consumer could override it via forwarding, same as Button's `type="button"`). Two independent components producing the same open question is more meaningful than either alone. *(The `type` instance was subsequently closed — see the 2026-09-08 correction entry below. `style`/`aria-*` remain open on both components.)*
 
 8. **`color.focus.ring` reuse is the first confirmed cross-component token.** Unlike the other findings above, this is a case where Button's specific content — not just its field shape — genuinely transferred. Verified via keyboard-driven computed-style checks in both themes.
 
@@ -88,3 +88,26 @@ Two Knowledge records now show a consistent pattern: field *shapes* like `props`
 ### Next falsification step
 
 Two components is enough to show some fields generalize and some don't, but not enough to formalize a schema — `variants`/`sizes` remain untested for a real multi-value case, and `compositionDependencies`/`valueOwnership` are single-record hypotheses. A third component that either (a) has genuine variants/sizes, or (b) is a compound/multi-part component (exercising `relatedComponents`/`compositionRules`, still empty in both records so far), would be the next meaningful stress test.
+
+## 2026-09-08 — Two focused corrections: executable `type` narrowing, and Knowledge provenance (status vs. origin)
+
+### Context
+
+A human-review pass on `input.json` against the executable API found two issues before merging PR #6: (1) `InputProps` forwarded `type` unrestricted, so `<Input type="email" />` compiled — contradicting the approved native-`<input type="text">` decision and leaving it undocumented-only rather than enforced; (2) some Knowledge claims used `status: "decision"` for facts that are not Clara decisions at all (e.g. "placeholder is not an accessible name" — a web-platform/accessibility-semantics fact Clara did not choose).
+
+### What changed
+
+- `InputProps` is now `Omit<ComponentPropsWithoutRef<"input">, "type">`. Verified as a compile error (`@ts-expect-error` on `<Input type="email" />`) and confirmed the rendered element's `type` attribute is still `"text"` at runtime. This narrows exactly one field, for a different reason than Button's `children` narrowing (Button's guaranteed an accessible-name source; Input's makes an already-approved primitive decision executable) — not a repository-wide native-prop policy.
+- `input.json` and `docs/knowledge/README.md` gained an experimental `origin` field on select claims (`"clara"` implied by absence, or `"web-platform"` stated explicitly), applied only where a claim's status could otherwise be misread as Clara authorship of a platform fact.
+- The "placeholder is not an accessible name" claim went from asserted (`status: "decision"`, no test behind it) to actually verified: a new Playwright check confirms the input's computed accessible name matches the paired `<label>` text and does not match the placeholder text, via `getByRole("textbox", { name })`. Status changed to `observed`, origin `web-platform`.
+- `button.json`'s "accessible name equals visible text by default" claim had the identical problem (status `decision` for a platform accessible-name-computation rule). Corrected in place: status → `implemented` (children is required in code; no dedicated accessible-name check was run for Button the way one now has for Input), `origin: "web-platform"` added, with a note pointing to this finding. Button's record was not otherwise re-audited claim-by-claim — that's recorded as a new `unresolved` item rather than assumed clean.
+
+### Observed learning
+
+**`status` and `origin` are separable knowledge dimensions.** `status` answers how established a claim is; it does not answer where the claim's truth comes from. Two records now show the same conflation independently (Input's placeholder claim, Button's accessible-name claim) — a claim inherited unchanged from a prior record's shape doesn't get re-examined for this unless something forces the comparison, which is itself worth noting: Knowledge drift can survive a first review and only surface on a second, differently-shaped component.
+
+This is not being treated as a finalized Knowledge architecture. `origin` was applied narrowly (only where ambiguity was actually found, not blanket across every claim), uses only two values (`clara` / `web-platform`), and several open questions were recorded rather than resolved: whether narrow application is the right call, whether two origin values are enough once a third kind of source appears (an external library, a published guideline distinct from raw platform behavior), and whether `status`+`origin` together are sufficient or still incomplete. See `input.json`'s `unresolved` and `docs/knowledge/README.md`.
+
+### Next falsification step (updated)
+
+Unchanged from above — a third, structurally different component remains the next meaningful stress test. This correction adds one more question for that component to test: does it need a third `origin` value, or do `clara`/`web-platform` continue to cover what's needed?

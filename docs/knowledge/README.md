@@ -18,7 +18,15 @@ Each significant field in a record carries a `status`, so a human or agent consu
 | `hypothesis` | A reasoned guess, not sourced from a decision and not tested. |
 | `unresolved` | An explicitly open question, deliberately left unanswered rather than guessed at. |
 
-This is a minimal, single-pass design, not a finalized provenance model. Known gap: `decision` currently collapses decisions that predate this task (e.g. "Button renders a native `<button>`") with decisions made during this task (e.g. "hover/pressed tokens now exist"). A `note` field carries that nuance in free text for now. Whether that collapse is a problem is itself something to evaluate once a second Knowledge record exists.
+This is a minimal, single-pass design, not a finalized provenance model. Known gap: `decision` currently collapses decisions that predate this task (e.g. "Button renders a native `<button>`") with decisions made during this task (e.g. "hover/pressed tokens now exist"). A `note` field carries that nuance in free text for now.
+
+## `status` vs. `origin`
+
+The second Knowledge record surfaced a real instance of the gap above: `input.json` originally marked "Placeholder text is not an accessible name" as `status: "decision"`, but that is not a Clara decision — it comes from web/accessibility semantics Clara did not choose and cannot change. `button.json` had the same problem for "Accessible name equals the visible text label by default": the *mapping* from text content to accessible name is a web-platform rule, even though Clara's own decision (requiring `children`) sits just upstream of it.
+
+`status` answers *how established* a claim is (decided / implemented / observed / hypothesis / unresolved). It does not answer *where the claim's truth comes from*. Conflating the two let a platform fact read as if Clara had authored or chosen it.
+
+Both records now carry an experimental `origin` field on the specific claims where this ambiguity was found — currently two values, `"clara"` (implied by the field's absence — the default) or `"web-platform"` (stated explicitly). It is applied narrowly, only to claims where a reader could otherwise mistake a platform fact for a Clara decision — not blanket-applied across every claim in either record. This is the smallest correction that fixed the specific misrepresentation found; it is not a proposal for a general provenance/origin taxonomy (external reference, product/slice, implementation, etc.), and whether two values are enough, or whether `origin` deserves the same treatment on claims where it wasn't applied, is left unresolved in `input.json`.
 
 ## What's deliberately not here
 

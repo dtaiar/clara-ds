@@ -1,6 +1,6 @@
 {
   "component": "Input",
-  "recordStatus": "experimental — second Clara Knowledge record; shape is a hypothesis to evaluate against button.json, not a committed schema. This record was written after an explicit human-review correction: an accessible name being required does NOT imply Input must own and render a Label. See `unresolved` for the resulting open question, and `compositionDependencies` for how accessibility is actually achieved in this pass.",
+  "recordStatus": "experimental — second Clara Knowledge record; shape is a hypothesis to evaluate against button.json, not a committed schema. This record has been through two rounds of human review. The first: an accessible name being required does NOT imply Input must own and render a Label — see `unresolved` for the resulting open question, and `compositionDependencies` for how accessibility is actually achieved in this pass. The second: (1) `type` is now omitted from Input's public API so the native <input type=\"text\"> decision is executable, not just documented — see `props`; and (2) some `accessibility`/`compositionDependencies` claims previously carried `status: \"decision\"` or `\"observed\"` with no way to say the underlying fact comes from the web platform rather than Clara. Those claims now carry an experimental `origin` field (`\"clara\"` implied by absence, or `\"web-platform\"` stated explicitly) — see docs/knowledge/README.md for what this field does and does not claim to be.",
   "slice": "01-intent-first-discovery",
   "sourceOfTruth": {
     "implementation": "app/src/components/Input.tsx",
@@ -81,12 +81,12 @@
       { "name": "value / onChange / defaultValue", "type": "native <input> value props", "required": false, "description": "Forwarded natively, unrestricted. Input owns no state of its own — see valueOwnership for what this does and does not guarantee." },
       { "name": "placeholder", "type": "string", "required": false, "description": "Forwarded natively. Not an accessible name and not a label substitute — see accessibility." },
       { "name": "id", "type": "string", "required": false, "description": "Forwarded natively. Required in practice to pair with an external <label htmlFor> — see compositionDependencies." },
-      { "name": "type", "type": "string", "required": false, "default": "text", "description": "Defaults to \"text\" the same way Button defaults to type=\"button\" — a default value, not a lock. A consumer can override it (e.g. type=\"email\"), which changes native behavior in ways the documented purpose does not describe." },
+      { "name": "type", "type": "not part of the public API", "required": false, "description": "Narrowed out via Omit<ComponentPropsWithoutRef<\"input\">, \"type\">. Always renders type=\"text\"; a consumer cannot pass type=\"email\"/\"password\"/\"number\"/etc. — verified as a compile error (@ts-expect-error) and confirmed the rendered element's type attribute is still \"text\" at runtime. This is what makes the native <input type=\"text\"> decision an executable guarantee rather than only a documented one." },
       { "name": "style", "type": "CSSProperties", "required": false, "description": "Forwarded natively, unrestricted — bypasses semantic tokens entirely, same escape hatch already flagged in button.json." },
       { "name": "aria-label / aria-labelledby", "type": "string", "required": false, "description": "Forwarded natively, unrestricted. Can supply an accessible name without a visible <label> — see accessibility and compositionDependencies." },
       { "name": "...rest", "type": "native <input> element attributes", "required": false, "description": "All other standard <input> attributes pass through unchanged." }
     ],
-    "note": "Unlike Button, Input narrows nothing — not even one field. ComponentPropsWithoutRef<\"input\"> passes through exactly as-is; app/src/components/Input.tsx (export type InputProps = ComponentPropsWithoutRef<\"input\">) is the exact and complete source of truth."
+    "note": "Input narrows exactly one field: `type`. This is a different narrowing than Button's (which required `children` to guarantee an accessible-name source) — Input's narrowing exists only to make the approved input-vs-textarea, single-line decision executable. Every other native <input> attribute, including style and the aria-label/aria-labelledby override, still passes through unrestricted. app/src/components/Input.tsx (export type InputProps = Omit<ComponentPropsWithoutRef<\"input\">, \"type\">) is the exact and complete source of truth."
   },
 
   "valueOwnership": {
@@ -100,12 +100,14 @@
       "behavior": "Input receives an accessible name.",
       "requiresComposition": "A consumer-supplied <label htmlFor={id}> paired with this input's id (as in the Slice 01 checkpoint), or aria-label/aria-labelledby passed through native forwarding.",
       "status": "observed",
-      "note": "Verified via Playwright's accessibility-tree-based getByLabel(\"Describe what you need\") locator against app/src/App.tsx's <label htmlFor=\"intent-input\"> + <Input id=\"intent-input\"> pairing. Input renders no label of its own by design — see this record's recordStatus and unresolved."
+      "origin": "web-platform",
+      "note": "Verified via Playwright's accessibility-tree-based getByLabel(\"Describe what you need\") locator, and by getByRole(\"textbox\", { name }) matching the label text and NOT the placeholder text, against app/src/App.tsx's <label htmlFor=\"intent-input\"> + <Input id=\"intent-input\"> pairing. The accessible-name computation itself is a web-platform mechanism; Clara's contribution is only the decision not to interfere with it (see accessibility). Input renders no label of its own by design — see this record's recordStatus and unresolved."
     },
     {
       "behavior": "Pressing Enter while focused in Input submits the entered intent.",
       "requiresComposition": "A native <form> wrapping Input and a submit-triggering control (the checkpoint uses a Clara Button with type=\"submit\").",
       "status": "observed",
+      "origin": "web-platform",
       "note": "Verified in the built preview (Playwright): pressing Enter inside the checkpoint's <form> triggered its onSubmit handler. This is native <form> behavior, not Input behavior — Input has no keydown/keyup handling of its own. Outside a <form>, Enter does nothing. Do not document 'Enter submits' as an intrinsic Input capability."
     }
   ],
@@ -117,7 +119,11 @@
   },
 
   "accessibility": [
-    { "claim": "Renders a native <input type=\"text\"> element.", "status": "decision" },
+    {
+      "claim": "Renders a native <input type=\"text\"> element.",
+      "status": "decision",
+      "note": "The choice of primitive (input, not textarea) is a Clara decision. Since the type-narrowing correction (props: `type`), this is also an executable guarantee, not only a documented one — verified as a compile error on `<Input type=\"email\" />` and confirmed the rendered element's type attribute is still \"text\" at runtime."
+    },
     {
       "claim": "Input does not render or own a <label>. An accessible name must come from consumer composition.",
       "status": "decision",
@@ -126,21 +132,24 @@
     {
       "claim": "When composed with a paired <label htmlFor>, the accessible name resolves correctly.",
       "status": "observed",
-      "note": "See compositionDependencies — same evidence, referenced here for the accessibility-specific claim."
+      "origin": "web-platform",
+      "note": "See compositionDependencies — same evidence, referenced here for the accessibility-specific claim. The label-for/id accessible-name computation is a web-platform (HTML/accessible-name-computation) mechanism, not something Clara implements — Clara's own contribution is only composing the pairing correctly in the checkpoint."
     },
     {
       "claim": "Placeholder text is not an accessible name and is not a substitute for a visible/associated label.",
-      "status": "decision",
-      "note": "Stated explicitly because this is a well-documented, common real-world anti-pattern — recorded here to preempt an agent (or human) treating the placeholder prop as sufficient for accessibility."
+      "status": "observed",
+      "origin": "web-platform",
+      "note": "Corrected from an earlier 'decision' status: this is a web-platform accessible-name-computation fact, not a Clara decision — Clara did not choose this behavior and cannot change it. Now backed by an actual runtime check rather than asserted: Playwright's accessible-name-based getByRole locator matched the input against the paired label's text and did NOT match it against the placeholder text, in the built checkpoint. Recorded explicitly to preempt an agent (or human) treating the placeholder prop as sufficient for accessibility."
     },
     {
       "claim": "Visible focus-visible outline using color.focus.ring, 2px solid, theme-resolved.",
       "status": "observed",
-      "note": "Verified via keyboard-driven computed style check in both themes — same method as button.json."
+      "note": "Verified via keyboard-driven computed style check in both themes — same method as button.json. No `origin` field needed here: the claim is specifically about Clara's own token choice, not an assertion about a platform mechanism, so there is no clara/web-platform ambiguity to resolve."
     },
     {
       "claim": "Cannot hold a newline character in its value (single-line guarantee).",
       "status": "observed",
+      "origin": "web-platform",
       "note": "Verified: filling the input with a string containing an embedded newline produced a value with the newline stripped. This is native <input> platform behavior, not something Clara implemented — it is what justified choosing <input> over <textarea> in the human-review decision."
     },
     {
@@ -177,18 +186,19 @@
       "No multiline, error/validation state, character limit, variants, sizes, or dedicated disabled/readOnly styling — none implemented, matching the approved Slice 01 scope.",
       "No helper-text slot or programmatic helper/error association (aria-describedby) — composition-level if ever needed, not designed here.",
       "Typed value color and placeholder color are not token-driven yet — no color.text.* semantic role exists; both render via browser/UA default.",
-      "type=\"text\" is a default, not a lock — a consumer can override it via native prop forwarding, changing Input into a differently-behaved native control despite the documented natural-language-intent purpose.",
-      "The native `style` and `className` props pass through unrestricted, and so do `aria-label`/`aria-labelledby` — same escape hatches already known from Button, now recurring for a second component.",
+      "The native `style` and `className` props pass through unrestricted, and so do `aria-label`/`aria-labelledby` — same escape hatches already known from Button, now recurring for a second component. Unlike `type`, closing these was judged out of scope for this correction (narrower, targeted fix only) — see unresolved.",
       "surface.default and border.default values (#ffffff, #d4d4d4) are unvalidated placeholders — no contrast check performed, same caveat already recorded for Button's hover/pressed colors."
     ]
   },
 
   "unresolved": [
     "Whether Clara should eventually model field semantics as (A) a self-contained Input/TextField that owns its own label, (B) composable primitives (Field + Label + Input + SupportingText), or (C) another structure discovered through later components. Explicitly not decided here per human review — this record only shows what a bare-primitive Input plus ad hoc composition looks like for one checkpoint.",
-    "Whether Input's public contract should stay full native-attribute-surface (current approach, matching Button) or move to a curated subset that closes the style/aria-*/type escape hatches — the same repository-wide question button.json already flagged, now with a second data point recurring identically.",
+    "Whether Input's public contract should stay full native-attribute-surface for its remaining props (current approach, matching Button) or move to a curated subset that also closes the style/aria-* escape hatches — the same repository-wide question button.json already flagged, now with a second data point recurring identically. `type` itself is no longer part of this question; it was narrowed in this pass because it directly contradicted an approved component decision, which is a narrower and more clear-cut case than style/aria-* (see props note).",
     "Whether color.text.* semantic roles (primary for typed value, muted for placeholder) should be added — deferred pending a demonstrated need beyond browser default.",
     "Whether controlled-only should ever become a Clara-wide convention for stateful components — not decided from one component. Input currently permits both controlled and uncontrolled usage via native forwarding, with an open risk that a consumer could supply a contradictory value+defaultValue combination.",
     "Whether `compositionDependencies` and `valueOwnership` deserve to be permanent Knowledge field shapes, or were only useful for this one record — flagged for the eventual schema discussion (see docs/knowledge/README.md), not decided here.",
+    "Whether `origin` should be applied consistently to every claim (including ones like variants/sizes/typography where clara-authorship is unambiguous) or only where ambiguity was actually found, as done here — this record deliberately applied it narrowly (see docs/knowledge/README.md) rather than blanket, and that choice itself is untested against a case where it matters more.",
+    "Whether `status` and `origin` are the right two dimensions, or whether origin needs more than two values (`clara` / `web-platform`) once a component draws on a third kind of source (e.g. an external library, a published accessibility guideline distinct from raw platform behavior) — not decided here; only the smallest correction that fixed the specific misrepresentation found in this record.",
     "Whether `variants`/`sizes` as a field shape is actually useful, given two components in a row have produced only a single degenerate value for each — still unresolved by this record.",
     "antiPatterns, relatedComponents, examples, and compositionRules are not included, for the same reason as button.json: no eval loop, no third component to relate to, no built Explorer surface yet."
   ]

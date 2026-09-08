@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { css } from "../styled-system/css";
+import { Button } from "./components/Button";
 
 // Slice 01 checkpoint only — not the Explorer UI. Proves that a single
 // element can switch between two Panda themes at runtime while resolving
@@ -38,28 +39,17 @@ export function App() {
         Supporting text style — smaller, for helper or secondary copy.
       </p>
 
-      <button
-        type="button"
+      {/* Button checkpoint — still not the Explorer UI. Now the real Clara
+          Button component (app/src/components/Button.tsx) instead of an
+          ad hoc styled <button>, reused for the same theme-toggle proof
+          ADR-002 established. See docs/knowledge/button.json. */}
+      <Button
         onClick={() =>
           setTheme((current) => (current === "explorer" ? "alternate" : "explorer"))
         }
-        className={css({
-          bg: "action.primary",
-          color: "action.onPrimary",
-          border: "none",
-          borderRadius: "md",
-          paddingX: "4",
-          paddingY: "2",
-          cursor: "pointer",
-          _focusVisible: {
-            outline: "2px solid",
-            outlineColor: "focus.ring",
-            outlineOffset: "2px",
-          },
-        })}
       >
         Sample element — toggle theme
-      </button>
+      </Button>
     </div>
   );
 }

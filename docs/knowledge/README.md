@@ -1,8 +1,8 @@
 # Clara Knowledge — experimental records
 
-**Status:** Experimental — second test of Clara Knowledge, still not a committed architecture.
+**Status:** Experimental — third test of Clara Knowledge, still not a committed architecture.
 
-`docs/architecture/overview.md` lists "how should Clara Knowledge be structured, and in which data format?" as an open question. This directory does not answer that question. It holds two real records — [`button.json`](./button.json) and [`input.json`](./input.json) — written to learn from actual consumption before any schema is proposed as a repository-wide standard.
+`docs/architecture/overview.md` lists "how should Clara Knowledge be structured, and in which data format?" as an open question. This directory does not answer that question. It holds three real records — [`button.json`](./button.json), [`input.json`](./input.json), and [`destructive-confirmation.json`](./destructive-confirmation.json) — written to learn from actual consumption before any schema is proposed as a repository-wide standard.
 
 Do not treat either record's shape as a template to copy for the next component without re-evaluating it. `input.json` reused most of `button.json`'s field shapes but also added two experimental fields with no Button equivalent — `valueOwnership` and `compositionDependencies` — because Input has real state ownership and context-dependent behavior (accessible name, Enter-to-submit) that Button's shape had no way to express honestly. See `docs/project/learning-log.md` for the full comparison. Two records show some fields generalize and some don't; that is evidence worth acting on, not yet enough to commit to a shared schema. Any such decision should be raised for human review.
 
@@ -38,3 +38,15 @@ Both records omit `antiPatterns`, `relatedComponents`, `examples`, and `composit
 - **`compositionDependencies`** — records behaviors (accessible name, Enter-to-submit) that only exist because of how a consumer composes Input with other elements (a paired `<label>`, a wrapping `<form>`), not because Input implements them itself. Folding this into `accessibility` prose was tried first and judged likely to bury a genuinely different kind of claim: "X is true only if the consumer also does Y" is conditional and structural, not a property of the component alone.
 
 Whether these two fields are reusable beyond Input, or were only useful for this one record, is itself recorded as unresolved in `input.json` — not decided here.
+
+## A third record introduces a different kind of Knowledge: Pattern
+
+`destructive-confirmation.json` is Clara's first **Pattern** Knowledge record, produced for Vertical Slice 01's demonstrated intent ("I need users to confirm before deleting something.") — see `docs/slices/01-intent-first-discovery.md`. It reuses `button.json`/`input.json`'s per-claim `status`/`note` shape wherever it applied cleanly, but it is not the same kind of record, for a structural reason rather than a stylistic one: a component record documents an executable artifact that already exists (`app/src/components/*.tsx`); a Pattern record, at this stage, documents product/UX judgment with **no executable artifact behind it at all**. That difference shows up in three concrete ways:
+
+- **No `props`, `variants`, `sizes`, `semanticTokens`, or single-file `sourceOfTruth.implementation`.** These fields all assume something was built and can be inspected; nothing was, so they don't apply and were dropped rather than left empty.
+- **A structurally new field, `composition`, describing relationships between entities.** `relatedComponents` existed by name in both prior records but stayed empty in both — this is the first record to actually populate a field like it, and it needed a richer shape (`role` + `component` + its own `status`) than a flat name list, because a Pattern's core content *is* the relationship between a confirmation surface, its copy, and two required actions — not a property of one component.
+- **A lower epistemic ceiling.** `button.json`/`input.json` earned `"observed"` through runtime checks (Playwright against a built app). Nothing in `destructive-confirmation.json` can reach `"observed"` yet, because there is no confirmation surface to run a check against — every claim in it tops out at `"hypothesis"`, except the one line quoted directly from the slice doc (`demonstratedIntent`, `status: "decision"`) and the scoping choices made in this implementation pass (`knownLimitations`, `status: "decision"`).
+
+One more finding worth flagging explicitly: `origin` (see below) is not applied anywhere in `destructive-confirmation.json`, because no claim in it traces to a web-platform fact the way Input's placeholder/label claims did — its claims trace to product/UX reasoning instead. Whether that means `origin` needs a third value (e.g. distinguishing product/UX convention from web-platform fact), or Pattern records simply don't need `origin` at all, is recorded as unresolved in the record itself rather than decided here.
+
+None of this is proposed as a Pattern schema. It is one record, evaluated the same way Input was evaluated against Button: which fields generalized, which didn't, and what genuinely new shape was required.

@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { css } from "../styled-system/css";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
+import patternKnowledge from "../../docs/knowledge/destructive-confirmation.json";
 
 // Clara Explorer — first real product surface for Vertical Slice 01. See
 // docs/slices/01-intent-first-discovery.md for the surface definition and
@@ -18,6 +19,21 @@ const SUGGESTED_INTENTS = [
   "Collect payment information",
   "Show that there is no content yet",
 ];
+
+// Deterministic intent → Pattern mapping for exactly one demonstrated intent
+// (docs/slices/01-intent-first-discovery.md, "Example"). This is a fixed
+// demonstration, not search, ranking, or AI matching — see
+// docs/knowledge/destructive-confirmation.json's knownLimitations. Any other
+// intent falls through to the "no confident match" state below.
+//
+// `patternKnowledge` (imported above) is read directly from that JSON file —
+// it is the only source of the matched result's content. Nothing below
+// duplicates or paraphrases its field values; the JSX only selects which
+// fields to show and how to lay them out. See docs/project/learning-log.md
+// for the prior duplicated-constant approach this replaced and why.
+function normalizeIntent(value: string): string {
+  return value.trim().toLowerCase().replace(/\.+$/, "");
+}
 
 // Standard visually-hidden technique, not a Clara token or component — kept
 // local to this one label because Input does not own label association
@@ -63,6 +79,21 @@ const suggestionStyle = css({
   },
 });
 
+// Result surface styling — reuses the same surface/border/radius tokens as
+// suggestionStyle above, not a new visual language.
+const resultCardStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "2",
+  width: "100%",
+  bg: "surface.default",
+  border: "1px solid",
+  borderColor: "border.default",
+  borderRadius: "md",
+  padding: "4",
+  textAlign: "left",
+});
+
 export function App() {
   const [intent, setIntent] = useState("");
   const [submittedIntent, setSubmittedIntent] = useState<string | null>(null);
@@ -71,6 +102,12 @@ export function App() {
     event.preventDefault();
     setSubmittedIntent(intent);
   }
+
+  const trimmedSubmittedIntent = submittedIntent?.trim() ?? "";
+  const isKnownIntent =
+    trimmedSubmittedIntent.length > 0 &&
+    normalizeIntent(trimmedSubmittedIntent) ===
+      normalizeIntent(patternKnowledge.demonstratedIntent.value);
 
   return (
     <main
@@ -154,11 +191,96 @@ export function App() {
             />
             <Button type="submit">Submit intent</Button>
           </div>
-          {submittedIntent !== null && (
-            <p className={css({ textStyle: "supporting" })}>
-              Submitted: {submittedIntent}
-            </p>
-          )}
+
+          <div role="status" aria-live="polite" className={css({ width: "100%" })}>
+            {isKnownIntent && (
+              <div className={resultCardStyle}>
+                <span className={css({ textStyle: "supporting" })}>
+                  Matched Pattern (fixed demonstration — not search)
+                </span>
+                <h2 className={css({ textStyle: "heading" })}>
+                  {patternKnowledge.pattern}
+                </h2>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Purpose
+                </span>
+                <p className={css({ textStyle: "body" })}>
+                  {patternKnowledge.purpose.value}
+                </p>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  When to use
+                </span>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {patternKnowledge.whenToUse.value.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Required content
+                </span>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {patternKnowledge.requiredContent.value.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Action hierarchy
+                </span>
+                <p className={css({ textStyle: "body" })}>
+                  {patternKnowledge.actionHierarchy.value}
+                </p>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Cancellation
+                </span>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {patternKnowledge.cancellationBehavior.value.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Recommended composition
+                </span>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {patternKnowledge.composition.map((item) => (
+                    <li key={item.role}>
+                      <strong>{item.role}:</strong> {item.component}
+                    </li>
+                  ))}
+                </ul>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Explicitly unresolved
+                </span>
+                <ul className={css({ textStyle: "supporting", paddingLeft: "4" })}>
+                  {patternKnowledge.unresolved.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+
+                <span className={css({ textStyle: "supporting" })}>
+                  Source: docs/knowledge/destructive-confirmation.json
+                </span>
+              </div>
+            )}
+
+            {submittedIntent !== null && trimmedSubmittedIntent.length > 0 && !isKnownIntent && (
+              <div className={resultCardStyle}>
+                <p className={css({ textStyle: "body" })}>
+                  Clara doesn't have a confident match for "{submittedIntent}" yet.
+                </p>
+                <p className={css({ textStyle: "supporting" })}>
+                  This experiment only resolves one demonstrated intent:
+                  &nbsp;"{patternKnowledge.demonstratedIntent.value}"
+                </p>
+              </div>
+            )}
+          </div>
         </form>
 
         <div

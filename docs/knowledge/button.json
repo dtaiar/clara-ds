@@ -74,18 +74,20 @@
   "props": {
     "status": "implemented",
     "value": [
-      { "name": "children", "type": "ReactNode", "required": true, "description": "Visible text label. Also the accessible name — there is no separate label prop." },
+      { "name": "children", "type": "ReactNode", "required": true, "description": "Visible text label. Required by Clara's ButtonProps type (narrower than native <button>, which permits an empty/label-less button) — enforces the approved visible-text-label scope. Also the accessible name by default; see the accessibility claim below for the exception." },
       { "name": "onClick", "type": "(event: MouseEvent) => void", "required": false },
       { "name": "type", "type": "\"button\" | \"submit\" | \"reset\"", "required": false, "default": "button" },
       { "name": "disabled", "type": "boolean", "required": false, "description": "Forwarded natively; see states[].disabled for what this does and does not do." },
-      { "name": "...rest", "type": "native <button> element attributes", "required": false, "description": "All other standard <button> attributes (aria-*, id, data-*, etc.) pass through unchanged." }
+      { "name": "style", "type": "CSSProperties", "required": false, "description": "Forwarded natively, unrestricted. Lets a consumer override any CSS property Clara's recipe sets, bypassing semantic tokens entirely — see knownLimitations." },
+      { "name": "aria-label / aria-labelledby", "type": "string", "required": false, "description": "Forwarded natively, unrestricted. If supplied, overrides the visible text as the accessible name — Clara does not prevent or discourage this at the type level." },
+      { "name": "...rest", "type": "native <button> element attributes", "required": false, "description": "All other standard <button> attributes (id, data-*, etc.) pass through unchanged." }
     ],
-    "note": "Deliberately no variant, size, icon, loading, or destructive props — none are implemented. Types here are a simplified paraphrase for readability; app/src/components/Button.tsx (ButtonProps = ComponentPropsWithoutRef<\"button\">) is the exact and complete source of truth, including native attributes not itemized above."
+    "note": "Deliberately no variant, size, icon, loading, or destructive props — none are implemented. Types here are a simplified paraphrase for readability; app/src/components/Button.tsx (ButtonProps = ComponentPropsWithoutRef<\"button\"> & { children: ReactNode }) is the exact and complete source of truth, including native attributes not itemized above. Only `children` is narrowed from the native type — every other native attribute, including style and the aria-label/aria-labelledby override described here, passes through exactly as ComponentPropsWithoutRef<\"button\"> defines it."
   },
 
   "accessibility": [
     { "claim": "Renders a native <button> element.", "status": "decision" },
-    { "claim": "Accessible name equals the visible text label (children).", "status": "decision", "note": "No icon-only usage is in scope, so no aria-label prop was added." },
+    { "claim": "Accessible name equals the visible text label (children) by default.", "status": "decision", "note": "True only when the consumer does not also pass aria-label or aria-labelledby. Both pass through unrestricted via native prop forwarding and, per standard accessible-name computation, take precedence over visible text content if supplied. Button's type does not prevent this — it is a known, currently unresolved gap between the intended default and the guaranteed contract." },
     { "claim": "Visible focus-visible outline using color.focus.ring, 2px solid, theme-resolved.", "status": "observed", "note": "Verified via keyboard-driven computed style check in both themes." },
     { "claim": "Keyboard activation (Enter/Space) and screen-reader announcement behavior.", "status": "unresolved", "note": "Relies entirely on native <button> semantics; not independently tested with a screen reader or assistive technology by this implementation pass. Do not read the other accessibility claims here as a compliance statement." }
   ],
@@ -121,7 +123,9 @@
       "No ButtonGroup or other compound composition.",
       "Relationship to suggestion chips/pills is undecided — do not assume equivalence or reuse without a separate decision.",
       "Hover/pressed color values are an unvalidated placeholder methodology (uniform RGB darkening of the theme accent), not a contrast-checked pair — consistent with token-model.md's existing position that exact color values are not yet approved.",
-      "No automated or manual accessibility testing beyond the two specific claims marked 'observed' above."
+      "No automated or manual accessibility testing beyond the two specific claims marked 'observed' above.",
+      "The native `style` prop passes through unrestricted, letting a consumer override any CSS property Clara's recipe sets — an escape hatch around token-based styling that this implementation does not close.",
+      "Native `aria-label`/`aria-labelledby` also pass through unrestricted and can override the visible-text-equals-accessible-name default described in accessibility — Button does not guarantee that default, only provides it absent an override."
     ]
   },
 
@@ -129,6 +133,7 @@
     "Whether disabled should get dedicated Clara styling/behavior, or stay purely native.",
     "Whether suggestion chips are a Button variant, a separate component, or unrelated.",
     "Whether hover/pressed values meet any contrast requirement — not evaluated.",
+    "Whether Clara's public component API should stay full native-attribute-surface (current approach — chosen because narrowing it needs its own deliberate design, not because it was evaluated as correct) or move to a curated subset that closes the `style` and aria-label/aria-labelledby escape hatches — this is a candidate repository-wide question (native prop forwarding vs. component escape hatches) flagged for human review, not decided here.",
     "antiPatterns, relatedComponents, examples, and compositionRules are not included in this record: Button has not yet been used in enough real contexts (no eval loop, no second component, no built Explorer surface) to observe any of them honestly. Adding them now would be invention, not evidence."
   ]
 }

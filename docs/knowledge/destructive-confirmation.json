@@ -1,0 +1,171 @@
+{
+  "pattern": "Destructive Confirmation",
+  "recordType": "pattern",
+  "recordStatus": "experimental — Clara's first Pattern Knowledge record; shape is a hypothesis to evaluate against Button/Input's component Knowledge shape, not a committed schema. See docs/knowledge/README.md for how and why this record's shape differs from a component record.",
+  "slice": "01-intent-first-discovery",
+
+  "sourceOfTruth": {
+    "implementation": "none — no confirmation-surface component exists yet; this record is product/UX guidance only, not documentation of executable code",
+    "explorerResult": "app/src/App.tsx (DESTRUCTIVE_CONFIRMATION_RESULT) mirrors this record's content for rendering; this JSON file remains the source of truth for the content itself",
+    "sliceDefinition": "docs/slices/01-intent-first-discovery.md, 'Example' section",
+    "priorRecords": ["docs/knowledge/button.json", "docs/knowledge/input.json"]
+  },
+
+  "demonstratedIntent": {
+    "status": "decision",
+    "value": "I need users to confirm before deleting something.",
+    "note": "The exact example intent named in docs/slices/01-intent-first-discovery.md. This record, and the Explorer's deterministic result, resolve this one intent string — not a general class of destructive-action phrasing. See knownLimitations."
+  },
+
+  "purpose": {
+    "status": "hypothesis",
+    "value": "Help a consumer prevent a user from unintentionally or unknowingly executing an action that destroys, removes, or irreversibly changes something, by requiring an explicit, separate confirming step before it runs.",
+    "note": "Proposed by this task's product-design analysis, not yet an approved Clara decision. Unlike button.json/input.json's purpose field, no existing Clara document states this in Clara's own words — it is reasoned from the demonstrated intent and general product-design analysis, not sourced from a prior decision."
+  },
+
+  "whenToUse": {
+    "status": "hypothesis",
+    "value": [
+      "The action destroys, removes, or irreversibly changes something a user would not want to lose by accident.",
+      "The action could be triggered by a single, low-friction interaction (one click/tap) without further review."
+    ],
+    "note": "Reasoned from the demonstrated intent, not tested against a real product flow."
+  },
+
+  "whenNotToUse": {
+    "status": "hypothesis",
+    "value": [
+      "The action is cheaply and obviously reversible — an 'undo after the fact' pattern may be a better fit; see relatedPatterns.",
+      "The action is consequential but not destructive (e.g. publishing, sending) — a different review/confirmation pattern, not this one.",
+      "The destructive action is expected and high-frequency in the surrounding flow (e.g. a triage tool where delete is a primary verb) — confirming every time risks alert fatigue. No resolution is proposed for this case here."
+    ],
+    "note": "Reasoned exclusions, not sourced from an explicit Clara decision and not tested against a real alternative flow."
+  },
+
+  "risks": {
+    "status": "hypothesis",
+    "value": [
+      "Accidental, unrecoverable data loss.",
+      "A user executes a destructive action without understanding its scope, including cascading effects.",
+      "Loss of trust in the product after an unintended destructive action."
+    ]
+  },
+
+  "requiredContent": {
+    "status": "hypothesis",
+    "value": [
+      "What specifically will be affected — named, not generic (e.g. 'Delete \"Q3 report\"?', not 'Are you sure?').",
+      "A consequence statement — irreversibility and scope, including cascading effects if any."
+    ],
+    "note": "A heading alone ('Are you sure?') is judged insufficient by this analysis. Not tested against real users."
+  },
+
+  "requiredActions": [
+    {
+      "role": "cancel",
+      "description": "Aborts with no consequence. Must always be present and easy to reach.",
+      "status": "hypothesis"
+    },
+    {
+      "role": "confirm",
+      "description": "Executes the destructive action. Requires a distinct activation step from whatever triggered the confirmation surface.",
+      "status": "hypothesis"
+    }
+  ],
+
+  "actionHierarchy": {
+    "status": "hypothesis",
+    "value": "The non-destructive path (cancel) should be the easy/default path — e.g. default focus. The destructive path must be visually distinguishable as consequential, not styled identically to an ordinary primary action.",
+    "note": "Whether the destructive action needs a new semantic role (e.g. color.action.danger) distinct from color.action.primary is explicitly unresolved — see unresolved. No such token exists in Clara today; docs/foundations/token-model.md already defers status/danger roles until a demonstrated need. This record does not create that need by itself — see composition and knownLimitations."
+  },
+
+  "cancellationBehavior": {
+    "status": "hypothesis",
+    "value": [
+      "Reachable by keyboard (Escape, or a clearly focusable cancel control).",
+      "Dismiss-equivalents (clicking outside an overlay, browser back) behave as cancel, never as confirm."
+    ]
+  },
+
+  "destructiveActionBehavior": {
+    "status": "hypothesis",
+    "value": [
+      "Requires an explicit user activation distinct from the action that triggered the confirmation surface — never fires automatically.",
+      "Should not be triggerable by a keystroke a user might press habitually (e.g. Enter) unless focus was deliberately moved to it."
+    ],
+    "note": "Design goals, not verified guarantees — nothing exists yet to test either claim against."
+  },
+
+  "composition": [
+    {
+      "role": "confirmation surface",
+      "component": "none — Clara has no Dialog/overlay component. Could be realized as a modal, an inline in-place replacement, a native confirm(), or avoided entirely via an undo-after pattern.",
+      "status": "unresolved"
+    },
+    {
+      "role": "heading + consequence copy",
+      "component": "existing textStyle roles (heading / supporting / body) — no new typography needed",
+      "status": "hypothesis"
+    },
+    {
+      "role": "cancel action",
+      "component": "Clara Button — no secondary/ghost variant exists yet; button.json already records this as a known limitation",
+      "status": "hypothesis"
+    },
+    {
+      "role": "confirm/destructive action",
+      "component": "Clara Button — no destructive variant or semantic danger role exists yet",
+      "status": "hypothesis"
+    }
+  ],
+
+  "accessibility": [
+    {
+      "claim": "Focus should move to the confirmation surface (or its safe default action) when it appears.",
+      "status": "hypothesis"
+    },
+    {
+      "claim": "Escape cancels.",
+      "status": "hypothesis"
+    },
+    {
+      "claim": "The consequence text must be programmatically associated with the surface, not only visually adjacent, so it is announced by assistive technology.",
+      "status": "hypothesis"
+    },
+    {
+      "claim": "The destructive signal must not rely on color alone — label wording (e.g. 'Delete') must carry the meaning too.",
+      "status": "hypothesis"
+    }
+  ],
+
+  "relatedPatterns": {
+    "status": "hypothesis",
+    "value": [
+      "Reversible action / Undo-after — not built. A likely sibling or alternative resolution of the same underlying risk (protect against unintended destructive actions) using less friction. Whether this should be a separate Pattern or a branch of this one is unresolved."
+    ]
+  },
+
+  "relatedComponents": {
+    "status": "hypothesis",
+    "value": ["Button (app/src/components/Button.tsx) — existing; no destructive or secondary variant"]
+  },
+
+  "knownLimitations": {
+    "status": "decision",
+    "value": [
+      "This record resolves exactly one demonstrated intent string via a deterministic match in the Explorer — not general search, not fuzzy matching, not AI matching. See docs/slices/01-intent-first-discovery.md, which explicitly permits this for a first experiment.",
+      "No confirmation-surface component exists — composition guidance is descriptive only, not executable.",
+      "No destructive/danger semantic token or Button variant exists — the Explorer's illustrative result reuses the existing action.primary Button styling for both actions, and says so.",
+      "Not validated against a second phrasing of the same intent, or against any other destructive-action intent."
+    ]
+  },
+
+  "unresolved": [
+    "Whether destructive actions need a new semantic role (e.g. color.action.danger) distinct from action.primary — likely, but not demonstrated by this experiment.",
+    "Whether Clara needs a real Dialog/overlay component now, or should continue to defer it — this experiment deliberately does not build one.",
+    "Whether confirm-before and undo-after should be modeled as two separate Patterns or one Pattern with a branch.",
+    "Whether Pattern Knowledge should share button.json/input.json's status/origin shape as-is, or needs a lower epistemic ceiling (nothing here can reach 'observed' until something real composes it) and/or a third origin value distinguishing product/UX reasoning from web-platform fact — no origin field is applied anywhere in this record because no claim here traces to a web-platform fact; see docs/knowledge/README.md.",
+    "Whether the field shapes introduced here (requiredActions, composition, actionHierarchy, cancellationBehavior, destructiveActionBehavior, relatedPatterns) are reusable beyond this one Pattern record, or were only useful for this one record — same open question button.json/input.json already raised about their own experimental fields.",
+    "Whether Pattern should become a formal Clara system entity with its own repository-wide schema — explicitly not decided by this record; see docs/knowledge/README.md."
+  ]
+}

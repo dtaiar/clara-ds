@@ -4,15 +4,66 @@ import { css } from "../styled-system/css";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
 
-// Slice 01 checkpoint only — not the Explorer UI. Proves that a single
-// element can switch between two Panda themes at runtime while resolving
-// the same Clara semantic roles, with no theme name or brand color
-// referenced by the component itself. See ADR-002.
-const THEME_NAMES = ["explorer", "alternate"] as const;
-type ThemeName = (typeof THEME_NAMES)[number];
+// Clara Explorer — first real product surface for Vertical Slice 01. See
+// docs/slices/01-intent-first-discovery.md for the surface definition and
+// docs/foundations/token-model.md for the token model this composes.
+//
+// `explorer` is applied directly as the shipped visual expression (not a
+// dev toggle): it is one of the two theme names ADR-002 approved, and its
+// name already matches this product surface. Theme mechanism ownership
+// stays with Panda per ADR-002 — this file only sets the attribute.
+const SUGGESTED_INTENTS = [
+  "Confirm a risky action",
+  "Help users recover from an error",
+  "Collect payment information",
+  "Show that there is no content yet",
+];
+
+// Standard visually-hidden technique, not a Clara token or component — kept
+// local to this one label because Input does not own label association
+// (see docs/knowledge/input.json, "unresolved"). The raw CSS values below
+// (0, -1px, 1px) are the well-known clip-technique constants, not resolved
+// Clara primitives; Panda passes unresolved literal values through
+// unchanged (see ADR-003's evidence on unresolved values).
+const visuallyHiddenStyle = css({
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  padding: "0",
+  margin: "-1px",
+  overflow: "hidden",
+  whiteSpace: "nowrap",
+  border: "0",
+});
+
+// Suggestions represent product intent (docs/slices/01-intent-first-discovery.md,
+// "Suggestion model"), not Clara's component inventory. They are plain
+// native <button> elements styled here, not a Clara Button variant and not
+// a new reusable component: this is the only place suggestion controls
+// exist, so nothing yet demonstrates a shared contract worth extracting.
+// See the PR description / learning log for the reasoning this leaves open.
+const suggestionStyle = css({
+  textStyle: "label",
+  display: "inline-flex",
+  alignItems: "center",
+  bg: "surface.default",
+  border: "1px solid",
+  borderColor: "border.default",
+  borderRadius: "md",
+  paddingX: "4",
+  paddingY: "2",
+  cursor: "pointer",
+  _hover: {
+    bg: "surface.subtle",
+  },
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "focus.ring",
+    outlineOffset: "2px",
+  },
+});
 
 export function App() {
-  const [theme, setTheme] = useState<ThemeName>("explorer");
   const [intent, setIntent] = useState("");
   const [submittedIntent, setSubmittedIntent] = useState<string | null>(null);
 
@@ -22,71 +73,116 @@ export function App() {
   }
 
   return (
-    <div
-      data-panda-theme={theme}
+    <main
+      data-panda-theme="explorer"
       className={css({
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
-        gap: "4",
-        padding: "8",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingX: "4",
+        paddingY: "8",
       })}
     >
-      <p>Active theme: {theme}</p>
-
-      {/* Typography checkpoint only — not the Explorer UI. Proves the four
-          Slice 01 text styles (heading, body, label, supporting) render
-          distinct, composed typography from Core-level primitives, with
-          no per-theme override. See docs/foundations/token-model.md. */}
-      <h1 className={css({ textStyle: "heading" })}>Heading text style</h1>
-      <p className={css({ textStyle: "body" })}>
-        Body text style — the default reading size for Slice 01 content.
-      </p>
-      <span className={css({ textStyle: "label" })}>Label text style</span>
-      <p className={css({ textStyle: "supporting" })}>
-        Supporting text style — smaller, for helper or secondary copy.
-      </p>
-
-      {/* Button checkpoint — still not the Explorer UI. Now the real Clara
-          Button component (app/src/components/Button.tsx) instead of an
-          ad hoc styled <button>, reused for the same theme-toggle proof
-          ADR-002 established. See docs/knowledge/button.json. */}
-      <Button
-        onClick={() =>
-          setTheme((current) => (current === "explorer" ? "alternate" : "explorer"))
-        }
+      <div
+        className={css({
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "8",
+          width: "100%",
+          // Raw value, not a Clara token: no `sizes` primitive category
+          // exists yet (ADR-003 — dropping Panda's default preset removed
+          // it, and Clara has not declared its own). This bounds the
+          // entry surface to a readable, search-box-like width the way a
+          // `sizes.contentMax`-style token would if one existed. Flagged
+          // as a candidate gap in the PR description.
+          maxWidth: "36rem",
+        })}
       >
-        Sample element — toggle theme
-      </Button>
+        <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+          Clara
+        </span>
 
-      {/* Input checkpoint — still not the Explorer UI. Tests the second
-          Clara Knowledge experiment (docs/knowledge/input.json). Input
-          itself owns no label and no submit behavior; both are composed
-          here with plain native elements (label/form), not new Clara
-          components — see input.json's `unresolved` for the open
-          Field/Label ownership question this checkpoint deliberately does
-          not resolve. */}
-      <form
-        onSubmit={handleIntentSubmit}
-        className={css({ display: "flex", flexDirection: "column", gap: "2" })}
-      >
-        <label htmlFor="intent-input" className={css({ textStyle: "label" })}>
-          Describe what you need
-        </label>
-        <Input
-          id="intent-input"
-          value={intent}
-          onChange={(event) => setIntent(event.target.value)}
-          placeholder="I need users to confirm before deleting something"
-        />
-        <Button type="submit">Submit intent</Button>
-        {submittedIntent !== null && (
+        <div
+          className={css({
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "2",
+            textAlign: "center",
+          })}
+        >
+          <h1 className={css({ textStyle: "heading" })}>
+            What are you trying to build?
+          </h1>
           <p className={css({ textStyle: "supporting" })}>
-            Submitted: {submittedIntent}
+            Describe what you need, and Clara will help you find the right
+            components, patterns and guidance.
           </p>
-        )}
-      </form>
-    </div>
+        </div>
+
+        <form
+          onSubmit={handleIntentSubmit}
+          className={css({
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4",
+            width: "100%",
+          })}
+        >
+          <label htmlFor="intent-input" className={visuallyHiddenStyle}>
+            Describe what you need
+          </label>
+          <div
+            className={css({
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "2",
+              width: "100%",
+            })}
+          >
+            <Input
+              id="intent-input"
+              value={intent}
+              onChange={(event) => setIntent(event.target.value)}
+              placeholder="Describe what you need..."
+              className={css({ flex: "1" })}
+            />
+            <Button type="submit">Submit intent</Button>
+          </div>
+          {submittedIntent !== null && (
+            <p className={css({ textStyle: "supporting" })}>
+              Submitted: {submittedIntent}
+            </p>
+          )}
+        </form>
+
+        <div
+          role="group"
+          aria-label="Example intents"
+          className={css({
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: "2",
+          })}
+        >
+          {SUGGESTED_INTENTS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => setIntent(suggestion)}
+              className={suggestionStyle}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      </div>
+    </main>
   );
 }

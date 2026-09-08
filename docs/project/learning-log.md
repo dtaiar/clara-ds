@@ -111,3 +111,50 @@ This is not being treated as a finalized Knowledge architecture. `origin` was ap
 ### Next falsification step (updated)
 
 Unchanged from above — a third, structurally different component remains the next meaningful stress test. This correction adds one more question for that component to test: does it need a third `origin` value, or do `clara`/`web-platform` continue to cover what's needed?
+
+## 2026-09-08 — First Clara Explorer entry surface (product surface, not a checkpoint)
+
+### Context
+
+`app/src/App.tsx` stopped being a sequence of per-component checkpoints and became the actual first product surface named in `docs/slices/01-intent-first-discovery.md`: the Explorer entry page (Clara identity, heading question, supporting copy, intent Input + submit Button, four intent suggestions), composed with a Google-style centered layout borrowed for its spatial logic only, not its branding. This is the first time Clara's foundations, theme mechanism, and the two existing components (`Button`, `Input`) were composed together into one real screen rather than exercised in isolation.
+
+### What was reused without change
+
+Existing `Button` and `Input` components, all four text styles (`heading`/`body`/`label`/`supporting`), the `action.primary`/`onPrimary`/`primaryHover`/`primaryPressed`, `surface.default`, `border.default`, and `focus.ring` semantic tokens, the `space.2`/`4`/`8` scale, `radii.md`, and the `explorer`/`alternate` Panda theme mechanism from ADR-002 — no component source changed. `data-panda-theme="explorer"` is applied directly as the surface's shipped visual identity (not a dev toggle), since `explorer` is an already-approved theme name that happens to match this product.
+
+### New primitives added, and why
+
+- `colors.neutral.100` and semantic `color.surface.subtle` (Core level, both themes identical) — added for the suggestion controls' hover background, using the same justification already established for Button's hover/pressed tokens: a real, mouse-clickable element needs pointer feedback beyond the resting state. `surface.subtle` was already named conceptually in `docs/foundations/token-model.md`'s Level 2 vocabulary but left unimplemented until now.
+
+### What was deliberately NOT created
+
+- **No Chip/Suggestion component.** Suggestions are plain native `<button>` elements styled locally in `App.tsx`, not a Clara Button variant. `button.json`'s `unresolved` already flagged "whether suggestion chips are a Button variant, a separate component, or unrelated" — this pass answers only that they are not a Button variant; it does not resolve the rest, because one usage site (four buttons, one page) is not evidence of a reusable contract. Extracting a component now would be inventing reuse that hasn't been demonstrated.
+- **No Container/Stack/Card primitive.** Layout composition uses Panda's `css()` utility directly at the page level, per the building-clara skill's implementation rules. Nothing in this one page repeats a layout shape often enough yet to justify a named layout primitive.
+- **No new spacing or radius values.** The existing `space.2/4/8` and `radii.md` were sufficient for the whole surface.
+
+### Gaps this real layout exposed
+
+1. **No `sizes`/max-width primitive.** The entry surface needs a bounded, readable content width (a "search-box" width), and Clara has no token for it — ADR-003 explicitly removed Panda's default preset's `sizes` category and Clara has not declared its own. `App.tsx` uses a raw `maxWidth: "36rem"` value, which Panda passes through unresolved (consistent with the raw-value behavior ADR-003 already documented), not a Clara-owned decision. This is a candidate for a future `sizes` primitive category once more than one surface demonstrates the same need.
+2. **No breakpoint tokens.** ADR-003 already flagged this as a known near-term gap. This surface did not need to close it: the whole layout (heading/copy centering, the input+button row, the suggestion row) uses plain flexbox (`flexWrap: "wrap"`, `flex: "1"` on Input, `justifyContent: "center"`) rather than breakpoint-conditioned styles, and reflows correctly at a 360px viewport with no horizontal overflow (verified, see Verification). Whether fluid/intrinsic layout continues to be sufficient once a surface needs different structure (not just reflow) at different widths — not just decoration — remains open.
+3. **No `color.text.*` roles.** Already a known Input limitation; this pass surfaces it again one level up, at the page: the "Clara" identity mark, the heading, and the supporting copy all render in the same inherited default text color, differentiated only by the existing text styles' size/weight. There is currently no token-driven way to visually mute the supporting copy or the identity mark relative to the heading.
+4. **Input has no ref-forwarding.** Considered giving the suggestion click handler a "populate and focus the input" behavior; dropped because `Input` (`app/src/components/Input.tsx`) does not forward a ref, and adding one would be a component API change outside this task's scope. Suggestions therefore only populate the field's value, not focus.
+
+### Suggestion interaction decided
+
+Clicking a suggestion sets the intent Input's value to that suggestion's text; it does not submit the form. This keeps the suggestion control single-purpose (populate) and reuses the existing native-form submit path (Submit button or Enter) for the actual submission, rather than giving suggestions a second, independent way to trigger submission.
+
+### Verification performed
+
+`npm run build` and `npm run lint` (`app/`) both pass. Runtime verification via Playwright against the built preview server:
+
+- Both themes resolve correctly on the shipped surface: `explorer` renders `rgb(245, 166, 35)` and `alternate` renders `rgb(91, 91, 214)` on the Submit button with no code change, only the theme attribute.
+- Keyboard Tab order: Input → Submit button → suggestion buttons, in DOM/visual order.
+- Focus-visible ring verified via keyboard Tab (not `.focus()`) on a suggestion button — `solid 2px rgb(245, 166, 35)`, confirming `color.focus.ring` now generalizes to a third, non-Clara-component element.
+- Clicking a suggestion populates the Input; submitting via the Button and via Enter inside the form both produced the expected "Submitted: …" text.
+- 360×740 viewport: suggestions wrap to multiple rows, the input+button row stacks, no horizontal overflow (`scrollWidth <= clientWidth`), same content hierarchy preserved as desktop.
+
+Not verified: screen-reader/assistive-technology behavior (same caveat already recorded in `button.json`/`input.json`); no automated accessibility or contrast audit was run.
+
+### Next falsification step
+
+The next component or surface that needs a bounded width, a breakpoint-dependent structural change (not just reflow), or a muted/secondary text color is the next real test of gaps 1–3 above — they should stay unresolved until then rather than being speculatively designed now.

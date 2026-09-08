@@ -40,6 +40,15 @@ export default defineConfig({
             // not a validated contrast pair, just the smallest new
             // primitive this component's border demonstrably requires.
             300: { value: "#d4d4d4" },
+            // Added for the Explorer entry surface's suggestion controls
+            // (app/src/App.tsx): a real, mouse-clickable secondary control
+            // (same category of demonstrated need as Button's hover/pressed
+            // addition) needs a hover background distinct from both
+            // `neutral.0` (resting) and `neutral.300` (border) — `300` is
+            // already a mid-tone boundary color, too strong to reuse as a
+            // subtle fill. Placeholder-quality value, same caveat as the
+            // other neutral stops above.
+            100: { value: "#f5f5f5" },
             900: { value: "#111111" },
           },
         },
@@ -129,6 +138,16 @@ export default defineConfig({
           // theme to override these.
           surface: {
             default: { value: "{colors.neutral.0}" },
+            // `subtle` was already named conceptually in
+            // docs/foundations/token-model.md's Level 2 vocabulary but left
+            // unimplemented until a real interactive element demonstrated
+            // the need — the Explorer entry surface's suggestion controls
+            // (app/src/App.tsx), which are real secondary actions a mouse
+            // user clicks and therefore need hover feedback, the same
+            // reasoning already used for Button's hover/pressed tokens.
+            // Declared once at Core level, matching `surface.default`: this
+            // is neutral UI chrome, not a brand-identity role.
+            subtle: { value: "{colors.neutral.100}" },
           },
           border: {
             default: { value: "{colors.neutral.300}" },

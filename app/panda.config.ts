@@ -24,6 +24,33 @@ export default defineConfig({
             900: { value: "#111111" },
           },
         },
+        // Typography primitives (Level 1). A single neutral system font
+        // stack — Clara has not approved a brand typeface, so this is a
+        // placeholder in the same spirit as the neutral color primitives
+        // above, not a font decision. Sizes/weights/line-heights are the
+        // smallest scale that distinguishes the four roles Slice 01's
+        // entry surface needs (heading, body, label, supporting text);
+        // see docs/foundations/token-model.md.
+        fonts: {
+          sans: {
+            value:
+              "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+          },
+        },
+        fontSizes: {
+          sm: { value: "0.875rem" },
+          md: { value: "1rem" },
+          xl: { value: "1.5rem" },
+        },
+        fontWeights: {
+          regular: { value: "400" },
+          medium: { value: "500" },
+          bold: { value: "700" },
+        },
+        lineHeights: {
+          tight: { value: "1.2" },
+          normal: { value: "1.5" },
+        },
       },
       semanticTokens: {
         colors: {
@@ -36,6 +63,52 @@ export default defineConfig({
           },
           focus: {
             ring: { value: "{colors.neutral.900}" },
+          },
+        },
+      },
+      // Semantic typography roles (Level 2), implemented as Panda text
+      // styles composed from the primitives above rather than as
+      // semanticTokens — see docs/foundations/token-model.md, "Typography:
+      // semantic styles, not only sizes", and the implementation decision
+      // it left open. A text style bundles several CSS properties
+      // (family/size/weight/line-height) as one named, atomic role;
+      // components should consume `textStyle: "heading"` etc., never the
+      // primitives directly. Declared once at Core level (not per theme):
+      // Slice 01 has not demonstrated a need for per-theme typefaces, so
+      // both themes resolve the same four roles identically. `display` is
+      // deferred — the entry surface (docs/slices/01-intent-first-discovery.md)
+      // only calls for heading, body, label, and supporting text.
+      textStyles: {
+        heading: {
+          value: {
+            fontFamily: "{fonts.sans}",
+            fontSize: "{fontSizes.xl}",
+            fontWeight: "{fontWeights.bold}",
+            lineHeight: "{lineHeights.tight}",
+          },
+        },
+        body: {
+          value: {
+            fontFamily: "{fonts.sans}",
+            fontSize: "{fontSizes.md}",
+            fontWeight: "{fontWeights.regular}",
+            lineHeight: "{lineHeights.normal}",
+          },
+        },
+        label: {
+          value: {
+            fontFamily: "{fonts.sans}",
+            fontSize: "{fontSizes.sm}",
+            fontWeight: "{fontWeights.medium}",
+            lineHeight: "{lineHeights.normal}",
+          },
+        },
+        supporting: {
+          value: {
+            fontFamily: "{fonts.sans}",
+            fontSize: "{fontSizes.sm}",
+            fontWeight: "{fontWeights.regular}",
+            lineHeight: "{lineHeights.normal}",
           },
         },
       },

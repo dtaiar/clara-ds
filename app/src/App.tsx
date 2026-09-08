@@ -25,6 +25,19 @@ export function App() {
     >
       <p>Active theme: {theme}</p>
 
+      {/* Typography checkpoint only — not the Explorer UI. Proves the four
+          Slice 01 text styles (heading, body, label, supporting) render
+          distinct, composed typography from Core-level primitives, with
+          no per-theme override. See docs/foundations/token-model.md. */}
+      <h1 className={css({ textStyle: "heading" })}>Heading text style</h1>
+      <p className={css({ textStyle: "body" })}>
+        Body text style — the default reading size for Slice 01 content.
+      </p>
+      <span className={css({ textStyle: "label" })}>Label text style</span>
+      <p className={css({ textStyle: "supporting" })}>
+        Supporting text style — smaller, for helper or secondary copy.
+      </p>
+
       <button
         type="button"
         onClick={() =>

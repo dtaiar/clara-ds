@@ -224,7 +224,19 @@ typography.label
 typography.supporting
 ```
 
-These roles may map to Panda text styles rather than semantic tokens. We should decide this during implementation based on which representation gives Clara the clearest shared contract.
+### Decision — Panda text styles, not semantic tokens
+
+**Decided (implementation decision, not an ADR — see `.claude/skills/building-clara/SKILL.md`, decision threshold):** Clara's semantic typography roles are implemented as Panda **text styles** (`theme.extend.textStyles` in `app/panda.config.ts`), each composed from primitive typography tokens (`fonts`, `fontSizes`, `fontWeights`, `lineHeights`). A text style bundles the CSS properties a role needs (family, size, weight, line-height) into one named, atomic contract — `textStyle: "heading"` — rather than requiring components to assemble several separate semantic tokens. This gave the clearest shared contract for a role that is inherently a composite of several properties, versus semantic *tokens*, which resolve a single value.
+
+Implemented for Slice 01: `heading`, `body`, `label`, `supporting` — the four roles named in the entry surface (`docs/slices/01-intent-first-discovery.md`). `display` is deferred; nothing in Slice 01's scope currently needs it, and it should only be added when a real surface demonstrates the need (rule 6).
+
+Declared once at Core level (`theme.extend`, not inside a `themes.<name>` block): both `explorer` and `alternate` resolve the same four roles identically. Slice 01 has not demonstrated a need for per-theme typefaces, so no font primitive is theme-specific yet — unlike color, where `action.primary` etc. are deliberately theme-resolved. If a later slice needs per-theme typography, that would extend this decision, not contradict it.
+
+`letterSpacings` primitives were not added — no role in this scale needed letter-spacing variation, so the token would have been unused and unjustifiable (see this document's own evaluation question: "Did we create tokens that are unused or impossible to justify from the slice?").
+
+Observed evidence (built and verified in `app/`, per the evidence model in `docs/project/foundation.md`): `npm run build` and `npm run lint` both pass. The generated stylesheet contains one atomic class per role (`.textStyle_heading`, `.textStyle_body`, `.textStyle_label`, `.textStyle_supporting`), each resolving to CSS custom properties that trace back to the primitive tokens above — confirmed by inspecting `dist/assets/*.css` after build. At runtime (Playwright, against the built preview server), computed styles matched the configured values exactly (`heading`: 24px / 700 / 28.8px line-height; `body`: 16px / 400 / 24px; `label`: 14px / 500 / 21px; `supporting`: 14px / 400 / 21px), and were identical after toggling between the `explorer` and `alternate` themes — only the button's theme-resolved color changed, confirming typography stayed Core-level and brand-neutral as intended.
+
+The exact scale values (`xl`/`md`/`sm` sizes; `regular`/`medium`/`bold` weights; `tight`/`normal` line-heights) are an implementation choice for this checkpoint, not a validated type scale — consistent with this document's existing position that spacing and color primitive values are not yet approved either.
 
 ## Theme contract
 

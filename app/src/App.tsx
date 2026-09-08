@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { css } from "../styled-system/css";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
+import patternKnowledge from "../../docs/knowledge/destructive-confirmation.json";
 
 // Clara Explorer — first real product surface for Vertical Slice 01. See
 // docs/slices/01-intent-first-discovery.md for the surface definition and
@@ -24,44 +25,15 @@ const SUGGESTED_INTENTS = [
 // demonstration, not search, ranking, or AI matching — see
 // docs/knowledge/destructive-confirmation.json's knownLimitations. Any other
 // intent falls through to the "no confident match" state below.
-const DESTRUCTIVE_CONFIRMATION_INTENT =
-  "I need users to confirm before deleting something.";
-
+//
+// `patternKnowledge` (imported above) is read directly from that JSON file —
+// it is the only source of the matched result's content. Nothing below
+// duplicates or paraphrases its field values; the JSX only selects which
+// fields to show and how to lay them out. See docs/project/learning-log.md
+// for the prior duplicated-constant approach this replaced and why.
 function normalizeIntent(value: string): string {
   return value.trim().toLowerCase().replace(/\.+$/, "");
 }
-
-// Mirrors docs/knowledge/destructive-confirmation.json — that JSON file is
-// the source of truth for this content; this constant duplicates only the
-// fields the Explorer renders. Keeping them in sync is a manual discipline
-// for this experiment, the same relationship Button.tsx/Input.tsx already
-// have with their own Knowledge records, applied in the other direction
-// (here the JSON is the source, not the code). See that record's own
-// `unresolved` for whether this should instead be read directly by a future
-// machine interface rather than duplicated.
-const DESTRUCTIVE_CONFIRMATION_RESULT = {
-  pattern: "Destructive Confirmation",
-  whyRecommended:
-    "Your intent describes a destructive, likely irreversible action (deleting something) that a user could trigger with a single click — the exact problem this pattern addresses.",
-  guidance: [
-    "Name what will be affected, and state that it can't be undone — a generic \"Are you sure?\" isn't enough.",
-    "Always give an easy way to cancel (keyboard-reachable, no consequence).",
-    "Make the confirming action require its own deliberate step — never automatic, never triggered by a habitual keypress.",
-    "Visually distinguish the destructive action from an ordinary action — Clara does not yet have a dedicated \"danger\" treatment for this (see unresolved).",
-  ],
-  composition: [
-    { role: "Confirmation surface", detail: "not built — could be a modal, an inline replacement, or an undo-after-the-fact pattern instead" },
-    { role: "Heading + consequence copy", detail: "existing Clara text styles — no new typography needed" },
-    { role: "Cancel action", detail: "Clara Button — no secondary/ghost variant exists yet" },
-    { role: "Confirm action", detail: "Clara Button — no destructive variant exists yet; shown here with the same styling as any other action" },
-  ],
-  unresolved: [
-    "Whether a destructive action needs its own semantic color role, distinct from Clara's primary action color.",
-    "Whether Clara needs a real Dialog/overlay component, or this stays guidance until a real surface needs one.",
-    "Whether \"confirm before\" and \"undo after\" should be separate patterns.",
-  ],
-  source: "docs/knowledge/destructive-confirmation.json",
-};
 
 // Standard visually-hidden technique, not a Clara token or component — kept
 // local to this one label because Input does not own label association
@@ -135,7 +107,7 @@ export function App() {
   const isKnownIntent =
     trimmedSubmittedIntent.length > 0 &&
     normalizeIntent(trimmedSubmittedIntent) ===
-      normalizeIntent(DESTRUCTIVE_CONFIRMATION_INTENT);
+      normalizeIntent(patternKnowledge.demonstratedIntent.value);
 
   return (
     <main
@@ -227,17 +199,46 @@ export function App() {
                   Matched Pattern (fixed demonstration — not search)
                 </span>
                 <h2 className={css({ textStyle: "heading" })}>
-                  {DESTRUCTIVE_CONFIRMATION_RESULT.pattern}
+                  {patternKnowledge.pattern}
                 </h2>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Purpose
+                </span>
                 <p className={css({ textStyle: "body" })}>
-                  {DESTRUCTIVE_CONFIRMATION_RESULT.whyRecommended}
+                  {patternKnowledge.purpose.value}
                 </p>
 
                 <span className={css({ textStyle: "label", fontWeight: "bold" })}>
-                  Key guidance
+                  When to use
                 </span>
                 <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
-                  {DESTRUCTIVE_CONFIRMATION_RESULT.guidance.map((line) => (
+                  {patternKnowledge.whenToUse.value.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Required content
+                </span>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {patternKnowledge.requiredContent.value.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Action hierarchy
+                </span>
+                <p className={css({ textStyle: "body" })}>
+                  {patternKnowledge.actionHierarchy.value}
+                </p>
+
+                <span className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Cancellation
+                </span>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {patternKnowledge.cancellationBehavior.value.map((line) => (
                     <li key={line}>{line}</li>
                   ))}
                 </ul>
@@ -246,9 +247,9 @@ export function App() {
                   Recommended composition
                 </span>
                 <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
-                  {DESTRUCTIVE_CONFIRMATION_RESULT.composition.map((item) => (
+                  {patternKnowledge.composition.map((item) => (
                     <li key={item.role}>
-                      <strong>{item.role}:</strong> {item.detail}
+                      <strong>{item.role}:</strong> {item.component}
                     </li>
                   ))}
                 </ul>
@@ -257,13 +258,13 @@ export function App() {
                   Explicitly unresolved
                 </span>
                 <ul className={css({ textStyle: "supporting", paddingLeft: "4" })}>
-                  {DESTRUCTIVE_CONFIRMATION_RESULT.unresolved.map((line) => (
+                  {patternKnowledge.unresolved.map((line) => (
                     <li key={line}>{line}</li>
                   ))}
                 </ul>
 
                 <span className={css({ textStyle: "supporting" })}>
-                  Source: {DESTRUCTIVE_CONFIRMATION_RESULT.source}
+                  Source: docs/knowledge/destructive-confirmation.json
                 </span>
               </div>
             )}
@@ -275,7 +276,7 @@ export function App() {
                 </p>
                 <p className={css({ textStyle: "supporting" })}>
                   This experiment only resolves one demonstrated intent:
-                  &nbsp;"{DESTRUCTIVE_CONFIRMATION_INTENT}"
+                  &nbsp;"{patternKnowledge.demonstratedIntent.value}"
                 </p>
               </div>
             )}

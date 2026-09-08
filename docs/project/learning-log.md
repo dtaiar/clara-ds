@@ -221,3 +221,53 @@ Per the pre-implementation ADR-threshold review: this pass does not establish Pa
 ### Next falsification step
 
 A second Pattern record — ideally one that is NOT destructive/irreversible-action-shaped (e.g. an empty-state or error-recovery pattern already present as Explorer suggestions) — would be the next real test of whether `composition`, `requiredActions`, `actionHierarchy`, and the rest of this record's new field shapes generalize across Patterns the way `accessibility`/`knownLimitations`/`unresolved` generalized across Button and Input, or whether they were specific to a two-action, cancel/confirm shape.
+
+## 2026-09-08 — Explorer reads Clara Knowledge directly: observed evidence for H1 ("one source, multiple consumers")
+
+### Context
+
+The previous entry's Explorer result rendered from `DESTRUCTIVE_CONFIRMATION_RESULT`, a hand-authored TypeScript constant in `app/src/App.tsx` that paraphrased `docs/knowledge/destructive-confirmation.json` and had to be kept in sync manually. That was a recorded limitation, not an accepted end state — it meant the human-facing surface and the "source of truth" Knowledge record were, in practice, two documents.
+
+Before changing anything, this was investigated rather than assumed. The original decision to duplicate rather than import had rested on an assumption that `tsconfig.app.json`'s `"include": ["src"]` would block `tsc -b` from resolving a JSON import that lives outside `src` (`docs/knowledge/`). That assumption was tested directly — a throwaway import was added, built, and reverted before any real change was made — and it was wrong:
+
+- `tsc -b --force` succeeded with the cross-boundary import, and gave real structural type-checking (confirmed by intentionally accessing a nonexistent field and getting a precise `TS2339` naming the record's actual 15+ fields) — `include` bounds a project's root file set, not files reached transitively through an import.
+- `vite build` bundled the JSON's actual content into `dist/assets/*.js` — confirmed by grepping the built output for literal strings from the JSON.
+- `vite dev` served the file too, at `/@fs/home/user/clara-ds/docs/knowledge/destructive-confirmation.json?import`, returning `200`. Vite's default `server.fs.allow` walks up looking for a workspace root (it stops at the nearest `.git`, which is `/home/user/clara-ds`), so anything under the repo — `docs/` included — was already inside the allowed serving boundary. No config change was needed anywhere.
+
+### What changed
+
+`app/src/App.tsx` now imports `docs/knowledge/destructive-confirmation.json` directly (`import patternKnowledge from "../../docs/knowledge/destructive-confirmation.json"`) and renders its real fields — `pattern`, `purpose.value`, `whenToUse.value`, `requiredContent.value`, `actionHierarchy.value`, `cancellationBehavior.value`, `composition` (role/component pairs), `unresolved`, and `demonstratedIntent.value` (now also the single source for the deterministic match string, replacing a second local constant that duplicated it). `DESTRUCTIVE_CONFIRMATION_RESULT` was deleted entirely. No config changes, no generated-artifact/codegen step, no schema, no CLI, no API, no runtime fetch — this is a build-time ES module import, the same mechanism already used for every other import in the file.
+
+`patternKnowledge.sourceOfTruth.explorerResult` in the JSON record itself was updated to describe this relationship instead of the retired constant.
+
+### The boundary this draws
+
+The Knowledge record (`docs/knowledge/destructive-confirmation.json`) is the only source of the result's *content* — every sentence and list item rendered comes from a field that already existed in that file for its own sake (Knowledge authoring), not one written to read well in a UI. `app/src/App.tsx` owns only *presentation*: which fields to show, in what order, under what heading, and how to loop over arrays. No new sentence was authored in App.tsx to summarize or introduce a section — section headings name the JSON field being shown ("Purpose", "When to use", "Required content", "Action hierarchy", "Cancellation", "Recommended composition", "Explicitly unresolved") rather than paraphrasing its content.
+
+One consequence of holding that boundary strictly: the earlier hand-authored version had a shorter, curated "Key guidance" list (4 sentences, paraphrased from several fields) and a synthesized "why Clara recommends this" sentence that did not exist verbatim anywhere in the JSON. Neither survived — a paraphrase or a synthesized sentence would itself be new content authored in App.tsx, which is exactly the duplication this change was meant to remove. The rendered card is now longer (it shows the record's full `unresolved` list verbatim, six items, rather than three curated ones) and reads more like a rendered document than a designed summary. That is a real, observed tradeoff of sourcing directly rather than curating — not a bug — and is worth returning to once more than one Pattern record exists and it's clearer which fields are meant for a human reader versus which are internal Knowledge-authoring bookkeeping.
+
+Per-field `status`/`note` metadata (e.g. that `purpose` is `"hypothesis"`, not `"decision"`) is present in the imported JSON but is not yet rendered anywhere in the UI — the Explorer shows only `.value`/`.component` content. Whether a human-facing surface should ever surface epistemic status inline (vs. status staying a Knowledge-authoring/agent-facing concern) is left open, not decided here.
+
+### Verification performed
+
+`npm run build` and `npm run lint` (`app/`) both pass. Runtime verification via Playwright against the built preview server, repeating and extending the prior pass's checks:
+
+- The matched-pattern card now shows content pulled live from the JSON: purpose text, both `whenToUse` items, both `requiredContent` items, the `actionHierarchy` paragraph, both `cancellationBehavior` items, all four `composition` role/component pairs, all six `unresolved` items, and the literal source path.
+- Normalized matching (trim/case/trailing-period tolerance) still works, now comparing against `patternKnowledge.demonstratedIntent.value` instead of a separate local constant.
+- The "no confident match" fallback still renders for an unrelated intent, and now quotes the demonstrated intent pulled from the same imported JSON rather than a duplicated string; no stale matched-pattern content remains from a prior submission.
+- The existing "Confirm a risky action" suggestion chip still does not trigger this match — unchanged behavior.
+- Keyboard tab order (Input → Submit → suggestions) is unchanged.
+
+Visual evidence updated: [`matched-pattern-result.png`](../evidence/destructive-confirmation-result/matched-pattern-result.png) was recaptured to reflect the fuller, directly-sourced result card. [`no-match-fallback.png`](../evidence/destructive-confirmation-result/no-match-fallback.png) is unchanged (its content didn't change).
+
+### Observed evidence for H1 ("one source, multiple consumers")
+
+This is the first concrete instance in Clara of a human-facing surface reading structured Knowledge directly rather than through a hand-maintained duplicate — a small, real test of H1 rather than an inference from architecture docs. It does not yet test the "multiple consumers" half of H1 (only one consumer, the Explorer, reads this file so far) — a second consumer (e.g. a future CLI or a second Pattern record's result) reading the same file without modification would be the next real test of that half. It also does not establish that JSON-in-`docs/` is Clara's permanent Knowledge storage/access mechanism — it demonstrates that the mechanism already available (a build-time ES module import, zero new infrastructure) is sufficient for this one experiment. Both are recorded as open, not concluded.
+
+### Explicitly not decided by this pass
+
+No configuration was changed (`tsconfig.app.json`, `vite.config.ts` were not touched — both already permitted this). No generated-artifact/codegen step, schema, CLI, API, or runtime-fetch mechanism was introduced. This is an implementation mechanism, not an architecture decision: it doesn't change Clara's public contract, a system boundary, governance, or source-of-truth ownership — `docs/knowledge/*.json` was already the established source-of-truth location; this change stops a UI-side duplicate of it from existing, it doesn't relocate or redefine it.
+
+### Next falsification step
+
+Unchanged from the prior entry (a second, non-destructive-shaped Pattern record is the next real stress test of the field shapes) — with one addition: that second record, if built, should also be read directly by whatever renders it, rather than reintroducing a duplicated rendering constant, to see whether this import approach continues to hold as a general pattern or was easy only because of this one record's shape.

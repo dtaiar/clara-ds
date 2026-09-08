@@ -6,7 +6,7 @@
 
   "sourceOfTruth": {
     "implementation": "none — no confirmation-surface component exists yet; this record is product/UX guidance only, not documentation of executable code",
-    "explorerResult": "app/src/App.tsx (DESTRUCTIVE_CONFIRMATION_RESULT) mirrors this record's content for rendering; this JSON file remains the source of truth for the content itself",
+    "explorerResult": "app/src/App.tsx imports this JSON file directly (`import patternKnowledge from \"../../docs/knowledge/destructive-confirmation.json\"`) and renders its fields; App.tsx owns only presentation/formatting, not content — see docs/project/learning-log.md's H1 evidence entry",
     "sliceDefinition": "docs/slices/01-intent-first-discovery.md, 'Example' section",
     "priorRecords": ["docs/knowledge/button.json", "docs/knowledge/input.json"]
   },

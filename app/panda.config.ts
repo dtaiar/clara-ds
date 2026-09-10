@@ -49,6 +49,15 @@ export default defineConfig({
             // subtle fill. Placeholder-quality value, same caveat as the
             // other neutral stops above.
             100: { value: "#f5f5f5" },
+            // Added for `text.secondary` under ADR-004. The light theme
+            // needs a foreground for supporting/secondary text and no
+            // existing stop can serve it: `300` (#d4d4d4) is a boundary
+            // color, unreadable as text, and `900` is the primary
+            // foreground. Same category of demonstrated, one-value-at-a-
+            // time addition as `300` (Input's border) and `100` (the
+            // suggestion control's hover fill). Placeholder-quality value,
+            // not a validated contrast pair — see ADR-004's trade-offs.
+            500: { value: "#6b6b6b" },
             900: { value: "#111111" },
           },
         },
@@ -132,10 +141,16 @@ export default defineConfig({
           // docs/knowledge/input.json for the reasoning, including why
           // `text.*` was deliberately NOT added in this pass.
           //
-          // Declared once at Core level, not per-theme: a form field's
-          // background/border are neutral UI chrome, not a brand-identity
-          // role like `action.primary` — no need demonstrated yet for a
-          // theme to override these.
+          // SUPERSEDED BY ADR-004. These were originally declared once at
+          // Core level with fixed light values, on the reasoning that a
+          // form field's background/border are neutral UI chrome rather
+          // than a brand-identity role like `action.primary`. Expressing a
+          // dark theme showed that reasoning was wrong: surface, border
+          // and text are exactly what a color scheme varies, and a Theme
+          // that cannot resolve them cannot express one. They remain
+          // DECLARED here — Core still owns the role names, and these
+          // values are the neutral default before any theme applies — but
+          // both themes now resolve them. See ADR-004.
           surface: {
             default: { value: "{colors.neutral.0}" },
             // `subtle` was already named conceptually in
@@ -145,12 +160,27 @@ export default defineConfig({
             // (app/src/App.tsx), which are real secondary actions a mouse
             // user clicks and therefore need hover feedback, the same
             // reasoning already used for Button's hover/pressed tokens.
-            // Declared once at Core level, matching `surface.default`: this
-            // is neutral UI chrome, not a brand-identity role.
+            // Now theme-resolved alongside `surface.default` per ADR-004.
             subtle: { value: "{colors.neutral.100}" },
           },
           border: {
             default: { value: "{colors.neutral.300}" },
+          },
+          // text.* — declared under ADR-004, which makes color scheme part
+          // of Theme expression. Before this, Clara declared no text color
+          // at all: every string on every surface inherited preflight's
+          // browser default, which meant text color was the one visual
+          // property no Clara decision owned.
+          //
+          // Only the two roles the current surfaces demonstrate. The wider
+          // vocabulary token-model.md names (`muted`, `inverse`) is NOT
+          // adopted: nothing consumes a third tier, and Button already
+          // covers foreground-on-accent via `action.onPrimary`, so
+          // `inverse` has no demonstrated need. Adding to this set is a
+          // change to ADR-004's contract and should be decided as one.
+          text: {
+            primary: { value: "{colors.neutral.900}" },
+            secondary: { value: "{colors.neutral.500}" },
           },
         },
       },
@@ -216,10 +246,44 @@ export default defineConfig({
       tokens: {
         colors: {
           accent: { value: "#F5A623" },
+          // Theme-local palette values, declared the same way `accent`
+          // already is: a Theme supplies its own visual values, Core owns
+          // the role names that consume them (ADR-004).
+          //
+          // These exist because Core's neutral ramp cannot express a dark
+          // surface — it was built one value at a time from light-surface
+          // needs (`0` white, `100` hover fill, `300` border, `500`
+          // secondary text, `900` foreground) and is light-biased as a
+          // result. Whether Clara should own a polarity-neutral ramp both
+          // expressions draw from is recorded as an OPEN QUESTION in
+          // ADR-004, deliberately not decided by this one dark theme.
+          //
+          // Placeholder-quality values, not validated contrast pairs —
+          // Clara still has no contrast-validation step (ADR-004's
+          // trade-offs; token-model.md's "intentionally open" list).
+          ground: { value: "#0D0E10" },
+          groundRaised: { value: "#16181B" },
+          line: { value: "#2A2D31" },
+          ink: { value: "#E8EAED" },
+          inkMuted: { value: "#8B9096" },
         },
       },
       semanticTokens: {
         colors: {
+          // Surface/border/text resolved per ADR-004 — this is the dark
+          // expression. No component changes accompany it: components
+          // consume the role names, not these values.
+          surface: {
+            default: { value: "{colors.ground}" },
+            subtle: { value: "{colors.groundRaised}" },
+          },
+          border: {
+            default: { value: "{colors.line}" },
+          },
+          text: {
+            primary: { value: "{colors.ink}" },
+            secondary: { value: "{colors.inkMuted}" },
+          },
           action: {
             primary: { value: "{colors.accent}" },
             // Hover/pressed: accent darkened ~15% / ~30% (uniform RGB
@@ -245,6 +309,26 @@ export default defineConfig({
       },
       semanticTokens: {
         colors: {
+          // Surface/border/text resolved per ADR-004 — this is the light
+          // expression, and it needs no theme-local palette values: Core's
+          // existing neutral primitives already cover it. `explorer` cannot
+          // say the same, which is the asymmetry ADR-004 records as an open
+          // question rather than resolving.
+          //
+          // These values reproduce exactly what Core previously declared as
+          // fixed defaults, so the light rendering is unchanged by ADR-004 —
+          // the change is where the values are resolved, not what they are.
+          surface: {
+            default: { value: "{colors.neutral.0}" },
+            subtle: { value: "{colors.neutral.100}" },
+          },
+          border: {
+            default: { value: "{colors.neutral.300}" },
+          },
+          text: {
+            primary: { value: "{colors.neutral.900}" },
+            secondary: { value: "{colors.neutral.500}" },
+          },
           action: {
             primary: { value: "{colors.accent}" },
             primaryHover: { value: "#4D4DB6" },

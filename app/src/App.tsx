@@ -113,6 +113,11 @@ export function App() {
     <main
       data-panda-theme="explorer"
       className={css({
+        // ADR-004: the Explorer's root consumes the surface/text roles the
+        // active theme resolves, instead of inheriting preflight's browser
+        // default. Colour-role application only — no layout change.
+        bg: "surface.default",
+        color: "text.primary",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -154,7 +159,7 @@ export function App() {
           <h1 className={css({ textStyle: "heading" })}>
             What are you trying to build?
           </h1>
-          <p className={css({ textStyle: "supporting" })}>
+          <p className={css({ textStyle: "supporting", color: "text.secondary" })}>
             Describe what you need, and Clara will help you find the right
             components, patterns and guidance.
           </p>
@@ -195,7 +200,7 @@ export function App() {
           <div role="status" aria-live="polite" className={css({ width: "100%" })}>
             {isKnownIntent && (
               <div className={resultCardStyle}>
-                <span className={css({ textStyle: "supporting" })}>
+                <span className={css({ textStyle: "supporting", color: "text.secondary" })}>
                   Matched Pattern (fixed demonstration — not search)
                 </span>
                 <h2 className={css({ textStyle: "heading" })}>
@@ -257,13 +262,13 @@ export function App() {
                 <span className={css({ textStyle: "label", fontWeight: "bold" })}>
                   Explicitly unresolved
                 </span>
-                <ul className={css({ textStyle: "supporting", paddingLeft: "4" })}>
+                <ul className={css({ textStyle: "supporting", color: "text.secondary", paddingLeft: "4" })}>
                   {patternKnowledge.unresolved.map((line) => (
                     <li key={line}>{line}</li>
                   ))}
                 </ul>
 
-                <span className={css({ textStyle: "supporting" })}>
+                <span className={css({ textStyle: "supporting", color: "text.secondary" })}>
                   Source: docs/knowledge/destructive-confirmation.json
                 </span>
               </div>
@@ -274,7 +279,7 @@ export function App() {
                 <p className={css({ textStyle: "body" })}>
                   Clara doesn't have a confident match for "{submittedIntent}" yet.
                 </p>
-                <p className={css({ textStyle: "supporting" })}>
+                <p className={css({ textStyle: "supporting", color: "text.secondary" })}>
                   This experiment only resolves one demonstrated intent:
                   &nbsp;"{patternKnowledge.demonstratedIntent.value}"
                 </p>

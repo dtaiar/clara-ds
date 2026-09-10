@@ -171,6 +171,24 @@ Observed evidence (built and verified in `app/`, per the evidence model in `docs
 color.focus.ring
 ```
 
+### Decision — surface, text and border are theme-resolved (ADR-004)
+
+**Decided (ADR-004 — `decisions/ADR-004-color-scheme-theme-expression.md`):** color scheme is part of Theme expression. A Clara Theme resolves it; Clara does not add a parallel `_dark`/`prefers-color-scheme` mechanism alongside Themes. That ADR owns the boundary reasoning and the rejected alternative; this entry records only what was implemented within it.
+
+`surface.default`, `surface.subtle` and `border.default` were previously declared once at Core level with fixed light values, on the reasoning that they are neutral UI chrome rather than brand-identity roles. Expressing a dark theme showed that reasoning was wrong — surface, border and text are exactly what a color scheme varies. They remain **declared** in Core (Core still owns the role names, and the Core values are the neutral default before any theme applies); both themes now **resolve** them.
+
+Implemented:
+
+- **One new primitive.** `neutral.500` (`#6b6b6b`), for light-mode secondary text. No existing stop could serve it: `300` (`#d4d4d4`) is a boundary color, unreadable as text, and `900` is the primary foreground. Same category of one-value-at-a-time addition as `300` (Input's border) and `100` (the suggestion control's hover fill).
+- **Two new semantic roles.** `text.primary` and `text.secondary`. Before this, Clara declared no text color at all and every string inherited `preflight`'s browser default — text color was the one visual property no Clara decision owned. `text.muted` and `text.inverse` were **not** added: nothing consumes a third tier, and Button already covers foreground-on-accent via `action.onPrimary`.
+- **Both themes resolve the extended set.** `alternate` is the light expression and needs no theme-local palette values — Core's existing neutrals cover it, and its values reproduce exactly what Core previously declared as fixed defaults, so light rendering is unchanged. `explorer` is the dark expression and supplies five theme-local palette values (`ground`, `groundRaised`, `line`, `ink`, `inkMuted`), declared the same way it already declares `accent`.
+
+Deliberately **not** changed by this pass: the typography scale, the spacing scale, the radius vocabulary, the neutral ramp beyond the single demonstrated primitive, the text roles beyond primary/secondary, and the surface/border role sets. Values are placeholder-quality and not validated contrast pairs, consistent with this document's existing position.
+
+**Open question (ADR-004):** the light expression resolves entirely from Core's neutrals; the dark expression cannot, because Clara's neutral ramp was built one value at a time from light-surface needs and is light-biased as a result. Whether Clara should own a polarity-neutral ramp both expressions draw from is unresolved. One dark theme is not enough to decide it.
+
+Observed evidence (built and runtime-verified in `app/`, per the evidence model in `docs/project/foundation.md`): after `panda codegen`, the generated `ColorToken` union is exactly the 21 entries above — no accidental vocabulary growth. `npm run build` and `npm run lint` both pass. At runtime (Playwright, against the built preview server), toggling only `data-panda-theme` between `explorer` and `alternate` on the existing surface — with no component or recipe edit — changed the root background (`#0D0E10` ↔ `#ffffff`), primary text (`#E8EAED` ↔ `#111111`), secondary text (`#8B9096` ↔ `#6b6b6b`), the Input's background/border, and the Button's accent, while `textStyle: "heading"` stayed 24px in both. This is the strongest evidence produced so far for H4 (`docs/project/foundation.md` — behavior and brand can be separated) and for this document's own evaluation question 1.
+
 ### Status
 
 Status roles such as danger, success, warning, and info are intentionally deferred unless Slice 01 needs them. We should not create a complete status palette simply because Design Systems commonly have one.
@@ -276,7 +294,7 @@ We are **not** deciding yet:
 - a complete spacing scale beyond the three values Slice 01 demonstrates (`space.2/4/8` — see decision above);
 - a radius scale beyond the single migration value (`radius.md` — see decision above);
 - complete type scale;
-- dark mode;
+- a second visual expression of the *same* theme identity in both color schemes (ADR-004 decided that color scheme belongs to Theme expression, so this would currently mean authoring two themes — see that ADR's trade-offs);
 - all status colors;
 - motion system;
 - elevation system;

@@ -271,3 +271,41 @@ No configuration was changed (`tsconfig.app.json`, `vite.config.ts` were not tou
 ### Next falsification step
 
 Unchanged from the prior entry (a second, non-destructive-shaped Pattern record is the next real stress test of the field shapes) — with one addition: that second record, if built, should also be read directly by whatever renders it, rather than reintroducing a duplicated rendering constant, to see whether this import approach continues to hold as a general pattern or was easy only because of this one record's shape.
+
+## 2026-09-10 — Composition needed a structural availability signal, independent of any one Explorer design
+
+### Context
+
+A product-design pass on the Clara Explorer's matched-result experience concluded that the result needed to communicate, per composition role, whether Clara can currently build that part — without the Explorer parsing `composition[].component`'s free text (e.g. matching "no destructive variant exists yet") to infer it. Parsing prose for a machine signal would have turned human-readable guidance into an accidental, undocumented API — the opposite of what a structured Knowledge model is for.
+
+That pass's **visual implementation was subsequently rejected** by the project owner and is not part of Clara. The Knowledge finding below is recorded separately from it deliberately: the need for a structural availability signal was demonstrated by a real consumer requirement, and it survives independently of which Explorer design eventually renders it. Nothing in this entry should be read as describing a shipped Explorer layout.
+
+### What changed in Knowledge
+
+`destructive-confirmation.json`'s four `composition` rows each gained `availability: "available" | "missing"`, independent of the existing `status` field. `status` says how established a row's guidance is; `availability` says whether Clara currently provides enough capability to fulfill that role **as this Pattern specifies it** — not merely whether some related primitive exists. Classified: confirmation surface → missing, heading + consequence copy → available, cancel action → missing, confirm/destructive action → missing.
+
+The cancel and confirm rows are both `missing` even though Button exists, because `actionHierarchy` specifies behavior (an easy/default cancel path, a destructive path that must be visually distinguishable from an ordinary primary action) that a plain, single-variant Button does not guarantee on its own. That distinction — between "a primitive exists" and "the composition is satisfiable" — is the substance of the field.
+
+### Constraint carried forward for any consumer of this field
+
+Whatever renders `availability` must read the structured field directly. It must not derive availability from role names via a lookup table, and must not infer it from `component`'s prose. The Pattern's own `accessibility` guidance additionally rules out communicating it by color alone.
+
+### Observed learning: Knowledge cannot yet honestly support a curated "product-relevant uncertainty" view
+
+The same design pass wanted to surface only *product-relevant* uncertainty, distinct from Clara's own internal schema/governance questions (e.g. "whether Pattern should become a formal Clara system entity" is not something a product designer needs to weigh). `unresolved` is a flat array of strings mixing both kinds, and nothing in the record allows them to be separated without parsing prose — which would mean inventing exactly the kind of undocumented classifier this change exists to avoid.
+
+No classifier was built. This is a real, recorded Knowledge-model gap: distinguishing product-facing uncertainty from Clara-internal uncertainty would need its own field (something like a per-item audience or scope marker) if a future consumer needs it structurally. Not proposed or built here. Any Explorer treatment of `unresolved` is therefore limited to structural facts about the list (such as its length) plus the full unfiltered content — not a filtered subset presented as if the filtering were knowledge-backed.
+
+### Explicitly not decided by this pass
+
+No schema was introduced for `availability`. No third value (e.g. `undecided`) was added — the two-value classification was an explicit constraint on this change, not a finding that two values are sufficient in general. `availability` was not applied to `button.json`/`input.json` (neither has a `composition`-shaped field) or to any other field in `destructive-confirmation.json` (`relatedComponents`, `relatedPatterns`). No ADR was raised — this is the same class of narrowly-scoped, reversible field addition as `origin`'s introduction, not a change to Clara's public contract, governance, or source-of-truth model. The product-vs-Clara-internal split within `unresolved` remains an open Knowledge-model question.
+
+### Next falsification step
+
+Whether `availability` (and the still-open product-vs-internal split within `unresolved`) generalize to a second Pattern record remains the next real test — unchanged in kind from the standing next-falsification-step for `composition` itself, just now with one more field to stress-test.
+
+There is also a second, weaker signal now available: a Knowledge field that was introduced to serve one specific UI, and then outlived that UI's rejection, is mild evidence that the field describes something about the Pattern rather than something about the screen. One instance is not enough to conclude that; it is worth watching for on the next record.
+
+## 2026-09-10 — Agent Knowledge Discovery evidence preserved
+
+Two exploratory tests with fresh, unfamiliar AI-agent sessions — run against `docs/knowledge/destructive-confirmation.json` after it existed, each given only a plain product-intent sentence and no Clara vocabulary or file location — previously existed only in experiment transcripts. That evidence is now recorded at `docs/evidence/agent-knowledge-discovery/README.md`: both sessions located and reasoned from the same Knowledge record the human Explorer consumes, distinguished repository-supported claims from their own inference, and did not invent missing Clara capabilities — but both also relied materially on repository structure and descriptive naming rather than demonstrating general semantic retrieval, which the record states explicitly as a limitation, not a caveat to minimize.

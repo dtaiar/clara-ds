@@ -271,3 +271,43 @@ No configuration was changed (`tsconfig.app.json`, `vite.config.ts` were not tou
 ### Next falsification step
 
 Unchanged from the prior entry (a second, non-destructive-shaped Pattern record is the next real stress test of the field shapes) — with one addition: that second record, if built, should also be read directly by whatever renders it, rather than reintroducing a duplicated rendering constant, to see whether this import approach continues to hold as a general pattern or was easy only because of this one record's shape.
+
+## 2026-09-10 — Second Pattern: Empty State / First Use
+
+### Task, scope and hypothesis
+
+Daniel authorized continuing with a second, structurally different Pattern after reviewing the repository state at `a2183ef` (PR #8). This pass used Codex in ChatGPT Work to implement that experiment. The model version is not recorded. Inputs were the project foundation, principles, architecture, Slice 01, ADR-001/002/003, existing component and Pattern code/Knowledge, and the prior learning log.
+
+The experiment challenges the first Pattern's shape (H3 composition knowledge, with a limited H1 direct-source check). It does not evaluate an agent as an independent consumer. Product guidance remains hypothetical pending review and use in a real flow.
+
+### Product-design analysis and implemented scope
+
+The existing suggestion “Show that there is no content yet” does not explain why content is absent. The record therefore explicitly assumes an accessible, successfully loaded, unfiltered collection with no items created yet. The Explorer displays that assumption before the guidance. It does not silently treat a load failure, filtered result, or access restriction as an empty collection.
+
+Added `docs/knowledge/empty-state.json`, directly imported by `app/src/App.tsx`. The existing suggestion now gets its text from that record and resolves to its result on submission. Exact normalized matching is preserved; the fallback lists both supported phrases. No new token, component, dependency in the app, public schema, CLI, or discovery service was introduced. The current destructive-confirmation behavior remains unchanged.
+
+### What the authoring/implementation exercise exposed
+
+| Field or assumption | Finding in this second Pattern |
+| --- | --- |
+| Purpose, usage/exclusions, required content, composition, unresolved questions | Useful shapes in both authored records; not yet validated with an independent consumer. |
+| Fixed cancel/confirm actions and cancellation/destructive behavior | Do not describe the selected empty-collection scenario; omitted rather than filled with unrelated content. |
+| `actionAvailability` | A new experimental field: one creation action only when the product supports and authorizes it; no action is a valid outcome. |
+| `scopedScenario` and `stateDistinctions` | New experimental fields expose missing context and nearby states. A generic phrase alone cannot select a product state reliably. |
+| One generic renderer/schema | Not established. Each result selects its own fields; the JSX shares existing styles only. |
+| Direct Knowledge import | Works for a second, different record in the production bundle, without a hand-maintained prose copy in the app. |
+
+This is observed authoring and implementation evidence, not a finding that users understand the pattern or that agents compose better interfaces with it. None of the new pattern's product recommendations is marked `observed` merely because the Explorer renders its text.
+
+### Verification and limitations
+
+- `npm run build` and `npm run lint` passed in `app/`.
+- Nine DOM smoke checks passed against the production bundle using temporary, pinned jsdom 26.1.0: initial state, existing suggestion population, scoped guidance and conditional action text, normalization, switching to the destructive result, unsupported input with both examples, deliberately unmatched generic risky action, whitespace reset, and captured runtime errors.
+- Reproducible script and raw results: `docs/evidence/empty-state-result/verify-dom.cjs` and `dom-results.json`. The temporary harness dependency is not an app dependency.
+- Vite preview runs at `127.0.0.1:4173`. The available cloud browser refused that URL with `net::ERR_BLOCKED_BY_CLIENT`. No visual, mobile layout, keyboard/Enter-to-submit, screen-reader, contrast, or assistive-technology validation was completed in this pass. The DOM harness is not a substitute for those checks. A draft PR remains the review boundary.
+
+### Reviewable trade-offs and next evidence
+
+The new result is still a lengthy rendered document. It labels the whole new record as experimental, but a complete per-claim status presentation remains undecided. Showing an explicitly scoped example is the smallest current demonstration; whether the generic intent should first ask a clarifying question needs a product decision informed by consumer testing.
+
+The case now has a comparison between two different kinds of Pattern guidance. That is not a second consumer: H1's human/agent parity remains untested. The next useful experiment is a minimal machine consumer of the same records, with predefined checks for supported intents, missing context, unsupported requests, and preservation of hypothesis/decision status. Its interface contract still needs to be scoped before implementation.

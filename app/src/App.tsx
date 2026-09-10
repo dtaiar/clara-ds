@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { css } from "../styled-system/css";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
@@ -13,6 +13,15 @@ import patternKnowledge from "../../docs/knowledge/destructive-confirmation.json
 // dev toggle): it is one of the two theme names ADR-002 approved, and its
 // name already matches this product surface. Theme mechanism ownership
 // stays with Panda per ADR-002 — this file only sets the attribute.
+//
+// VISUAL DESIGN PASS (this file): every raw pixel/rem value, shadow,
+// opacity, and grid technique below is a local Explorer presentation
+// decision, not a Clara Core token or component. Clara Core has no
+// `sizes`, elevation, muted-text, or breakpoint vocabulary yet (see
+// docs/foundations/token-model.md, "What remains intentionally open", and
+// ADR-003) — this file works within that gap rather than inventing Core
+// tokens to fill it. If a value here recurs, that is evidence for a future
+// Core decision, not one made here.
 const SUGGESTED_INTENTS = [
   "Confirm a risky action",
   "Help users recover from an error",
@@ -31,9 +40,7 @@ const SUGGESTED_INTENTS = [
 // duplicates or paraphrases its field values; the JSX only selects which
 // fields to show, in what order, under what disclosure, and how to derive
 // presentation labels (e.g. "Available"/"Missing") from structured field
-// values. See docs/project/learning-log.md for why the result was
-// restructured and for the one Knowledge limitation this pass found but did
-// not solve (see the "Needs context" section below).
+// values.
 function normalizeIntent(value: string): string {
   return value.trim().toLowerCase().replace(/\.+$/, "");
 }
@@ -67,7 +74,6 @@ const visuallyHiddenStyle = css({
 // native <button> elements styled here, not a Clara Button variant and not
 // a new reusable component: this is the only place suggestion controls
 // exist, so nothing yet demonstrates a shared contract worth extracting.
-// See the PR description / learning log for the reasoning this leaves open.
 const suggestionStyle = css({
   textStyle: "label",
   display: "inline-flex",
@@ -89,88 +95,213 @@ const suggestionStyle = css({
   },
 });
 
-// Result surface styling — reuses the same surface/border/radius tokens as
-// suggestionStyle above, not a new visual language.
-const resultCardStyle = css({
+// Clara wordmark — accent-colored (color.action.primary) so the same
+// identity mark carries through from the entry surface into the result,
+// instead of the result feeling like a different screen. A restrained,
+// single use of the accent for brand identity.
+const wordmarkStyle = css({
+  textStyle: "label",
+  fontWeight: "bold",
+  color: "action.primary",
+});
+
+// Shared "eyebrow" treatment for every small metadata/section label in the
+// result (the fixed-demonstration disclosure, and each section heading).
+// Local opacity reduction — not a new text color role — is how secondary
+// text recedes without inventing color.text.secondary/muted (a named,
+// still-open Core gap; see token-model.md).
+const metaLabelStyle = css({
+  textStyle: "label",
+  opacity: "0.55",
+  letterSpacing: "0.01em",
+});
+
+// The recommendation is the headline of the result — sized well beyond
+// textStyle heading's 24px so it reads as Clara's answer, not another
+// section label. A one-off local scale adjustment for this one hero
+// moment, per this task's explicit allowance for local typography scale
+// adjustments — not a new Clara type role.
+const heroPatternNameStyle = css({
+  fontFamily: "sans",
+  fontSize: "2rem",
+  fontWeight: "bold",
+  lineHeight: "1.15",
+});
+
+// Small accent-colored marker beside the pattern name — the same role
+// color.action.primary already used for the wordmark, reused here for
+// visual cohesion rather than decoration for its own sake.
+const accentMarkStyle = css({
+  display: "inline-block",
+  width: "0.3rem",
+  height: "1.75rem",
+  borderRadius: "md",
+  bg: "action.primary",
+  flexShrink: "0",
+});
+
+const purposeTextStyle = css({
+  textStyle: "body",
+  maxWidth: "38rem",
+  opacity: "0.85",
+});
+
+// The composition diagram's canvas — the one deliberately bounded surface
+// in the whole result, so it reads as a distinct object (a diagram) rather
+// than another paragraph. Every other section sits directly on the page.
+const compositionCanvasStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "4",
-  width: "100%",
+  bg: "surface.subtle",
+  borderRadius: "md",
+  // "8" (2rem) reuses the declared spacing scale rather than a new raw
+  // value — Clara's spacing scale only declares 2/4/8 (ADR-003); any other
+  // bare numeral silently resolves as a raw pixel value, not a token (e.g.
+  // an earlier "6" here rendered as `padding: 6px`, not 1.5rem).
+  padding: "8",
+});
+
+// The "confirmation surface" role rendered as its own nested white card —
+// a second layer of depth inside the gray canvas, communicating
+// containment (the rest of the tree lives inside this role) before any
+// label is read.
+const surfaceNodeCardStyle = css({
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: "2",
+  bg: "surface.default",
+  borderRadius: "md",
+  padding: "4",
+  boxShadow: "0 1px 2px rgba(17, 17, 17, 0.06)",
+});
+
+// `textTransform: "capitalize"` is presentation only — it changes how the
+// browser renders `composition[].role`, not the underlying string. The
+// Knowledge record's role values are deliberately lowercase, freeform
+// prose-style strings; rendering them as "Confirmation Surface" here reads
+// as a product label instead of a raw field dump, without editing the
+// record itself.
+const surfaceRoleTextStyle = css({
+  textStyle: "body",
+  fontWeight: "bold",
+  textTransform: "capitalize",
+  flex: "1",
+  minWidth: "0",
+});
+
+// The connecting rail — a single vertical rule under the surface card,
+// carrying the eye down into its parts. Indentation + a continuous line
+// reads as "contained by" before any of the row labels are read.
+const railStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "2",
+  marginLeft: "4",
+  // Raw value: 2/4/8 are the only declared spacing tokens, and none reads
+  // right here — an explicit unit-bearing value is the documented ADR-003
+  // fallback, not an accidental bare numeral (which would silently resolve
+  // to a stray pixel value instead of a token).
+  paddingLeft: "1.25rem",
+  borderLeft: "2px solid",
+  borderColor: "border.default",
+});
+
+const childRowStyle = css({
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: "2",
+  paddingY: "2",
+});
+
+const childRoleGroupStyle = css({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: "2",
+  flex: "1",
+  minWidth: "0",
+});
+
+// Small accent dot marking each composed part — ties back to the same
+// accent used for the wordmark and the recommendation's accent mark,
+// rather than introducing a separate marker convention.
+const nodeDotStyle = css({
+  width: "0.375rem",
+  height: "0.375rem",
+  borderRadius: "md",
+  bg: "action.primary",
+  flexShrink: "0",
+  marginTop: "2",
+});
+
+const childRoleTextStyle = css({ textStyle: "body", textTransform: "capitalize" });
+
+// Availability tags. "Missing" is a filled, bordered pill that stands out
+// against the gray canvas; "Available" is plain, reduced-opacity text with
+// no container, so it recedes. The distinction is weight/fill/opacity —
+// never hue — per this Pattern's own accessibility guidance ("must not
+// rely on color alone") and this task's constraint against inventing
+// red/green semantics. The word itself ("Available"/"Missing") always
+// carries the meaning.
+const tagBaseStyle = css({
+  textStyle: "label",
+  display: "inline-flex",
+  alignItems: "center",
+  flexShrink: "0",
+  whiteSpace: "nowrap",
+});
+
+const tagMissingStyle = css({
   bg: "surface.default",
   border: "1px solid",
   borderColor: "border.default",
   borderRadius: "md",
-  padding: "4",
-  textAlign: "left",
+  paddingX: "2",
+  paddingY: "0.25rem",
+  fontWeight: "bold",
 });
 
-// Reused for every section label inside the result card — defined once so
-// the same visual weight (label / bold) reads consistently across
-// Recommendation, Recommended composition, Consider instead and Needs
-// context, instead of repeating the same css() call at each call site.
-const sectionLabelStyle = css({ textStyle: "label", fontWeight: "bold" });
+const tagAvailableStyle = css({
+  opacity: "0.55",
+});
 
-// A section that follows the first (Recommendation) gets a top rule using
-// the existing border.default token — cheap visual separation between
-// result sections with no new token or component.
-const resultSectionStyle = css({
+// Secondary insights sit directly on the page, with no card — deliberately
+// quieter than the composition canvas. `repeat(auto-fit, minmax(...))` is a
+// plain CSS responsive technique that needs no Panda breakpoint condition:
+// Clara has not declared breakpoint tokens yet (see ADR-003's "What remains
+// intentionally open"), so a `md:`-style condition would silently no-op —
+// this avoids that failure mode entirely, per its own documented lesson
+// about undefined Panda keys producing invalid or missing CSS with no
+// build error.
+const secondaryGridStyle = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(15rem, 1fr))",
+  gap: "8",
+});
+
+const secondaryColumnStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "2",
-  paddingTop: "2",
-  borderTop: "1px solid",
-  borderColor: "border.default",
 });
 
-// One row of the composition tree — role label on the left, structured
-// availability on the right. `flexWrap: "nowrap"` plus `minWidth: 0` on the
-// role text keeps the two columns on the same visual row at any width: the
-// role text wraps internally if it must, but the availability word never
-// detaches onto its own orphaned, left-aligned line the way it did under
-// `flexWrap: "wrap"` at the 360px evidence viewport (see learning log).
-// Availability is communicated by wording ("Available"/"Missing") and
-// weight, never by color alone, per this Pattern's own accessibility
-// guidance (destructive-confirmation.json, "The destructive signal must not
-// rely on color alone").
-const compositionRowStyle = css({
-  display: "flex",
-  flexWrap: "nowrap",
-  justifyContent: "space-between",
-  alignItems: "baseline",
-  gap: "2",
-  width: "100%",
-});
-
-// Child rows (the parts composed inside the confirmation surface) are
-// indented under the parent row. The "├─"/"└─" markers are plain text
-// glyphs, not an icon system — a tree shape drawn the same way it would be
-// in a text-based file listing, requiring no new Clara component.
-const compositionChildRowStyle = css({
-  display: "flex",
-  flexWrap: "nowrap",
-  justifyContent: "space-between",
-  alignItems: "baseline",
-  gap: "2",
-  width: "100%",
-  paddingLeft: "4",
-});
-
-const compositionRoleStyle = css({ flex: "1", minWidth: "0" });
-const compositionAvailabilityStyle = css({ flexShrink: "0", whiteSpace: "nowrap" });
+const secondaryBodyStyle = css({ textStyle: "body", opacity: "0.85" });
+const secondarySupportingStyle = css({ textStyle: "supporting", opacity: "0.7" });
 
 // Progressive disclosure for the long-form guidance uses native <details>,
-// not a Clara Accordion/Disclosure component — the browser already provides
-// the toggle behavior, keyboard support (Tab to focus, Enter/Space to
-// toggle) and semantics for free.
+// not a Clara Accordion/Disclosure component — styled quietly, as
+// supporting material rather than another major section.
 const detailStyle = css({
-  borderTop: "1px solid",
-  borderColor: "border.default",
   paddingTop: "2",
 });
 
 const detailSummaryStyle = css({
   textStyle: "label",
-  fontWeight: "bold",
+  opacity: "0.6",
   cursor: "pointer",
   _focusVisible: {
     outline: "2px solid",
@@ -182,9 +313,30 @@ const detailSummaryStyle = css({
 const detailBodyStyle = css({
   display: "flex",
   flexDirection: "column",
-  gap: "2",
-  paddingTop: "2",
+  gap: "4",
+  paddingTop: "4",
 });
+
+const detailSectionLabelStyle = css({ textStyle: "label", fontWeight: "bold" });
+
+function CompositionTag({ availability }: { availability: string }) {
+  return (
+    <span
+      className={`${tagBaseStyle} ${availability === "missing" ? tagMissingStyle : tagAvailableStyle}`}
+    >
+      {formatAvailability(availability)}
+    </span>
+  );
+}
+
+function DetailSection({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
+      <span className={detailSectionLabelStyle}>{label}</span>
+      {children}
+    </div>
+  );
+}
 
 export function App() {
   const [intent, setIntent] = useState("");
@@ -217,7 +369,7 @@ export function App() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: hasSubmitted ? "flex-start" : "center",
         paddingX: "4",
         paddingY: "8",
       })}
@@ -226,25 +378,22 @@ export function App() {
         className={css({
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          gap: hasSubmitted ? "4" : "8",
+          alignItems: hasSubmitted ? "stretch" : "center",
+          gap: hasSubmitted ? "1.5rem" : "8",
           width: "100%",
           // Raw value, not a Clara token: no `sizes` primitive category
           // exists yet (ADR-003 — dropping Panda's default preset removed
           // it, and Clara has not declared its own). 36rem bounds the entry
-          // surface to a readable, search-box-like width; 42rem once a
-          // result exists gives the composition tree and detail disclosure
-          // enough room. Both are the same documented gap, not two new
-          // decisions — see docs/foundations/token-model.md.
-          maxWidth: hasSubmitted ? "42rem" : "36rem",
+          // surface to a readable, search-box-like width; 44rem once a
+          // result exists gives the composition diagram and the two-column
+          // secondary area room to breathe.
+          maxWidth: hasSubmitted ? "44rem" : "36rem",
         })}
       >
-        <span className={css({ textStyle: "label", fontWeight: "bold" })}>
-          Clara
-        </span>
+        <span className={wordmarkStyle}>Clara</span>
 
         {hasSubmitted ? (
-          <p className={css({ textStyle: "supporting", textAlign: "center" })}>
+          <p className={css({ textStyle: "supporting", opacity: "0.6" })}>
             Showing results for &ldquo;{trimmedSubmittedIntent}&rdquo;
           </p>
         ) : (
@@ -272,7 +421,7 @@ export function App() {
           className={css({
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
+            alignItems: hasSubmitted ? "stretch" : "center",
             gap: "4",
             width: "100%",
           })}
@@ -284,7 +433,7 @@ export function App() {
             className={css({
               display: "flex",
               flexWrap: "wrap",
-              justifyContent: "center",
+              justifyContent: hasSubmitted ? "flex-start" : "center",
               gap: "2",
               width: "100%",
             })}
@@ -301,136 +450,132 @@ export function App() {
 
           <div role="status" aria-live="polite" className={css({ width: "100%" })}>
             {isKnownIntent && (
-              <div className={resultCardStyle}>
-                <span className={css({ textStyle: "supporting" })}>
-                  Matched Pattern (fixed demonstration — not search)
-                </span>
-
-                {/* 1. Recommendation */}
-                <h2 className={css({ textStyle: "heading" })}>
-                  {patternKnowledge.pattern}
-                </h2>
-                <p className={css({ textStyle: "body" })}>
-                  {patternKnowledge.purpose.value}
-                </p>
-
-                {/* 2. Recommended composition — the visual center of the
-                    result. Each role's availability is read directly from
-                    composition[].availability; nothing here parses
-                    `component`'s prose. */}
-                <div className={resultSectionStyle}>
-                  <span className={sectionLabelStyle}>
-                    Recommended composition
+              <div
+                className={css({
+                  display: "flex",
+                  flexDirection: "column",
+                  // Raw value: 2/4/8 are the only declared spacing tokens
+                  // and none is generous enough for major zone separation;
+                  // an explicit unit-bearing value avoids the bare-numeral
+                  // pitfall (a prior "10" here silently resolved to 10px,
+                  // not 2.5rem — see ADR-003).
+                  gap: "3rem",
+                  width: "100%",
+                  paddingTop: "4",
+                })}
+              >
+                {/* 1. Recommendation — the headline. No card, no border:
+                    typography and the accent mark carry it. */}
+                <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
+                  <span className={metaLabelStyle}>
+                    Matched Pattern (fixed demonstration — not search)
                   </span>
+                  <div
+                    className={css({
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                    })}
+                  >
+                    <span className={accentMarkStyle} aria-hidden="true" />
+                    <h2 className={heroPatternNameStyle}>{patternKnowledge.pattern}</h2>
+                  </div>
+                  <p className={purposeTextStyle}>{patternKnowledge.purpose.value}</p>
+                </div>
 
-                  <div className={compositionRowStyle}>
-                    <span
-                      className={`${compositionRoleStyle} ${css({ textStyle: "body", fontWeight: "bold" })}`}
-                    >
-                      {surfaceRow.role}
-                    </span>
-                    <span
-                      className={`${compositionAvailabilityStyle} ${css({
-                        textStyle: "body",
-                        fontWeight:
-                          surfaceRow.availability === "missing" ? "bold" : "normal",
-                      })}`}
-                    >
-                      {formatAvailability(surfaceRow.availability)}
-                    </span>
+                {/* 2. Recommended composition — the visual center. A
+                    bounded canvas containing a nested "surface" card and a
+                    connected rail of its parts, so the relationship reads
+                    spatially before any label is read. Availability is read
+                    directly from composition[].availability. */}
+                <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
+                  <span className={metaLabelStyle}>Recommended composition</span>
+                  <div className={compositionCanvasStyle}>
+                    <div className={surfaceNodeCardStyle}>
+                      <span className={surfaceRoleTextStyle}>{surfaceRow.role}</span>
+                      <CompositionTag availability={surfaceRow.availability} />
+                    </div>
+
+                    <div className={railStyle}>
+                      {compositionParts.map((part) => (
+                        <div key={part.role} className={childRowStyle}>
+                          <div className={childRoleGroupStyle}>
+                            <span className={nodeDotStyle} aria-hidden="true" />
+                            <span className={childRoleTextStyle}>{part.role}</span>
+                          </div>
+                          <CompositionTag availability={part.availability} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3 & 4. Secondary insights — deliberately quiet, side by
+                    side on wide viewports, stacking naturally on narrow
+                    ones via CSS auto-fit (no breakpoint token needed). */}
+                <div className={secondaryGridStyle}>
+                  <div className={secondaryColumnStyle}>
+                    <span className={metaLabelStyle}>Consider instead</span>
+                    {patternKnowledge.relatedPatterns.value.map((line) => (
+                      <p key={line} className={secondaryBodyStyle}>
+                        {line}
+                      </p>
+                    ))}
                   </div>
 
-                  {compositionParts.map((part, index) => (
-                    <div key={part.role} className={compositionChildRowStyle}>
-                      <span
-                        className={`${compositionRoleStyle} ${css({ textStyle: "body" })}`}
-                      >
-                        {index === compositionParts.length - 1 ? "└─ " : "├─ "}
-                        {part.role}
-                      </span>
-                      <span
-                        className={`${compositionAvailabilityStyle} ${css({
-                          textStyle: "body",
-                          fontWeight:
-                            part.availability === "missing" ? "bold" : "normal",
-                        })}`}
-                      >
-                        {formatAvailability(part.availability)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 3. Consider instead — the existing relatedPatterns
-                    content, rendered verbatim. */}
-                <div className={resultSectionStyle}>
-                  <span className={sectionLabelStyle}>Consider instead</span>
-                  {patternKnowledge.relatedPatterns.value.map((line) => (
-                    <p key={line} className={css({ textStyle: "body" })}>
-                      {line}
+                  <div className={secondaryColumnStyle}>
+                    <span className={metaLabelStyle}>Needs context</span>
+                    <p className={secondaryBodyStyle}>
+                      Clara has {unresolvedCount} open question
+                      {unresolvedCount === 1 ? "" : "s"} recorded about this
+                      recommendation — see &ldquo;Full detail&rdquo; below.
                     </p>
-                  ))}
+                  </div>
                 </div>
 
-                {/* 4. Needs context. Knowledge limitation: `unresolved` mixes
-                    product-relevant uncertainty with Clara-internal
-                    schema/governance questions, and nothing in the record
-                    lets this be split reliably without parsing prose — doing
-                    that would reintroduce the exact problem `availability`
-                    was added to avoid. Rather than invent a classifier, this
-                    surfaces only a structural fact (the count) and points to
-                    the unfiltered list in "Full detail" below. See
-                    docs/project/learning-log.md, 2026-09-10 entry. */}
-                <div className={resultSectionStyle}>
-                  <span className={sectionLabelStyle}>Needs context</span>
-                  <p className={css({ textStyle: "supporting" })}>
-                    Clara has {unresolvedCount} open question
-                    {unresolvedCount === 1 ? "" : "s"} recorded about this
-                    recommendation — see &ldquo;Full detail&rdquo; below.
-                  </p>
-                </div>
-
-                {/* Detail — the rest of the long-form guidance, behind a
-                    native disclosure rather than a Clara component. */}
+                {/* Detail — supporting material, not a major section. */}
                 <details className={detailStyle}>
                   <summary className={detailSummaryStyle}>Full detail</summary>
                   <div className={detailBodyStyle}>
-                    <span className={sectionLabelStyle}>When to use</span>
-                    <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
-                      {patternKnowledge.whenToUse.value.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
+                    <DetailSection label="When to use">
+                      <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                        {patternKnowledge.whenToUse.value.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </DetailSection>
 
-                    <span className={sectionLabelStyle}>Required content</span>
-                    <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
-                      {patternKnowledge.requiredContent.value.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
+                    <DetailSection label="Required content">
+                      <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                        {patternKnowledge.requiredContent.value.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </DetailSection>
 
-                    <span className={sectionLabelStyle}>Action hierarchy</span>
-                    <p className={css({ textStyle: "body" })}>
-                      {patternKnowledge.actionHierarchy.value}
-                    </p>
+                    <DetailSection label="Action hierarchy">
+                      <p className={css({ textStyle: "body" })}>
+                        {patternKnowledge.actionHierarchy.value}
+                      </p>
+                    </DetailSection>
 
-                    <span className={sectionLabelStyle}>Cancellation</span>
-                    <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
-                      {patternKnowledge.cancellationBehavior.value.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
+                    <DetailSection label="Cancellation">
+                      <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                        {patternKnowledge.cancellationBehavior.value.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </DetailSection>
 
-                    <span className={sectionLabelStyle}>
-                      Explicitly unresolved
-                    </span>
-                    <ul className={css({ textStyle: "supporting", paddingLeft: "4" })}>
-                      {patternKnowledge.unresolved.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
+                    <DetailSection label="Explicitly unresolved">
+                      <ul className={css({ textStyle: "supporting", paddingLeft: "4" })}>
+                        {patternKnowledge.unresolved.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </DetailSection>
 
-                    <span className={css({ textStyle: "supporting" })}>
+                    <span className={secondarySupportingStyle}>
                       Source: docs/knowledge/destructive-confirmation.json
                     </span>
                   </div>
@@ -439,12 +584,19 @@ export function App() {
             )}
 
             {hasSubmitted && !isKnownIntent && (
-              <div className={resultCardStyle}>
+              <div
+                className={css({
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2",
+                  paddingTop: "4",
+                })}
+              >
                 <p className={css({ textStyle: "body" })}>
                   Clara doesn't have a confident match for &ldquo;
                   {submittedIntent}&rdquo; yet.
                 </p>
-                <p className={css({ textStyle: "supporting" })}>
+                <p className={css({ textStyle: "supporting", opacity: "0.7" })}>
                   This experiment only resolves one demonstrated intent:
                   &nbsp;&ldquo;{patternKnowledge.demonstratedIntent.value}&rdquo;
                 </p>
@@ -453,26 +605,46 @@ export function App() {
           </div>
         </form>
 
+        {/* Once a result exists, the page should end on the result, not on
+            generic navigation — the suggestions stay reachable but are
+            pushed further away and visually quieted rather than competing
+            with the recommendation above them for the page's last word. */}
         <div
-          role="group"
-          aria-label="Example intents"
           className={css({
             display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
+            flexDirection: "column",
             gap: "2",
+            width: "100%",
+            marginTop: hasSubmitted ? "3rem" : "0",
+            opacity: hasSubmitted ? "0.7" : "1",
           })}
         >
-          {SUGGESTED_INTENTS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => setIntent(suggestion)}
-              className={suggestionStyle}
-            >
-              {suggestion}
-            </button>
-          ))}
+          {hasSubmitted && (
+            <span className={css({ textStyle: "supporting", opacity: "0.7" })}>
+              Try another intent
+            </span>
+          )}
+          <div
+            role="group"
+            aria-label="Example intents"
+            className={css({
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: hasSubmitted ? "flex-start" : "center",
+              gap: "2",
+            })}
+          >
+            {SUGGESTED_INTENTS.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => setIntent(suggestion)}
+                className={suggestionStyle}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </main>

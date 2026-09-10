@@ -100,22 +100,26 @@
     {
       "role": "confirmation surface",
       "component": "none — Clara has no Dialog/overlay component. Could be realized as a modal, an inline in-place replacement, a native confirm(), or avoided entirely via an undo-after pattern.",
-      "status": "unresolved"
+      "status": "unresolved",
+      "availability": "missing"
     },
     {
       "role": "heading + consequence copy",
       "component": "existing textStyle roles (heading / supporting / body) — no new typography needed",
-      "status": "hypothesis"
+      "status": "hypothesis",
+      "availability": "available"
     },
     {
       "role": "cancel action",
       "component": "Clara Button — no secondary/ghost variant exists yet; button.json already records this as a known limitation",
-      "status": "hypothesis"
+      "status": "hypothesis",
+      "availability": "missing"
     },
     {
       "role": "confirm/destructive action",
       "component": "Clara Button — no destructive variant or semantic danger role exists yet",
-      "status": "hypothesis"
+      "status": "hypothesis",
+      "availability": "missing"
     }
   ],
 

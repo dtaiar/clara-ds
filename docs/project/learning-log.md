@@ -271,3 +271,27 @@ No configuration was changed (`tsconfig.app.json`, `vite.config.ts` were not tou
 ### Next falsification step
 
 Unchanged from the prior entry (a second, non-destructive-shaped Pattern record is the next real stress test of the field shapes) — with one addition: that second record, if built, should also be read directly by whatever renders it, rather than reintroducing a duplicated rendering constant, to see whether this import approach continues to hold as a general pattern or was easy only because of this one record's shape.
+
+## 2026-09-10 — Explorer result redesign: composition needed a structural availability signal
+
+### Context
+
+A product-design pass on the Explorer's result experience (see PR description) concluded that the result needed to communicate, at a glance, which parts of the recommended composition Clara can already build and which it can't — without the Explorer parsing `composition[].component`'s free text (e.g. matching "no destructive variant exists yet") to infer that. Parsing prose for a machine signal would have turned human-readable guidance into an accidental, undocumented API — the opposite of what a structured Knowledge model is for.
+
+### What changed
+
+- `destructive-confirmation.json`'s four `composition` rows each gained `availability: "available" | "missing"`, independent of the existing `status` field. `status` says how established a row's guidance is; `availability` says whether Clara currently provides enough capability to fulfill that role **as this Pattern specifies it** — not merely whether some related primitive exists. Classified: confirmation surface → missing, heading + consequence copy → available, cancel action → missing, confirm/destructive action → missing. The cancel and confirm rows are both `missing` even though Button exists, because `actionHierarchy` specifies behavior (an easy/default cancel path, a destructive path that must be visually distinguishable from an ordinary primary action) that a plain, single-variant Button does not guarantee on its own.
+- `app/src/App.tsx`'s matched-result view was redesigned around this field: composition now renders as a labeled relationship tree (confirmation surface containing its three parts), with each role's availability shown as plain text ("Available"/"Missing", not color, not an icon) read directly from `composition[].availability`. No lookup table or role-name matching was introduced in App.tsx to derive this — it is a direct render of the structured field.
+- The result was also restructured around a small, fixed hierarchy — recommendation (pattern name + purpose), composition (now the visual center), "Consider instead" (rendered verbatim from `relatedPatterns.value`, not paraphrased), and a "Needs context" line — with the remaining long-form guidance (`whenToUse`, `requiredContent`, `actionHierarchy`, `cancellationBehavior`, the full `unresolved` list, and the source path) moved behind a native `<details>`/`<summary>` disclosure. No Clara Accordion/Disclosure component was created; native element semantics (including keyboard behavior) were used as-is.
+
+### Observed learning: Knowledge could not yet honestly support a curated "product-relevant uncertainty" section
+
+The redesign's brief asked for a "Needs context" section surfacing only *product-relevant* uncertainty, distinct from Clara's own internal schema/governance questions (e.g. "whether Pattern should become a formal Clara system entity" is not something a product designer needs to weigh). `unresolved` is a flat array of strings mixing both kinds. Reliably separating them without parsing prose would have required inventing an undocumented classifier — exactly the kind of prose-interpretation this whole change exists to avoid doing implicitly. Rather than build that classifier, "Needs context" was implemented as the smallest honest thing possible: a structural fact only (the count of `unresolved` items, `patternKnowledge.unresolved.length`), pointing to the full, unfiltered list inside the detail disclosure. This is a real, recorded Knowledge-model gap, not a UI shortcut: distinguishing product-facing uncertainty from Clara-internal uncertainty would need its own field (something like a per-item audience or scope marker) if a future consumer needs it structurally. Not proposed or built here.
+
+### Explicitly not decided by this pass
+
+No schema was introduced for `availability`. No third value (e.g. `undecided`) was added — the two-value classification above was an explicit constraint on this change, not a finding that two values are sufficient in general. `availability` was not applied to `button.json`/`input.json` (neither has a `composition`-shaped field) or to any other field in `destructive-confirmation.json` (`relatedComponents`, `relatedPatterns`). No ADR was raised — this is the same class of narrowly-scoped, reversible field addition as `origin`'s introduction, not a change to Clara's public contract, governance, or source-of-truth model. The product/Clara-internal split within `unresolved` remains an open Knowledge-model question, not resolved by this pass.
+
+### Next falsification step
+
+Whether `availability` (and the still-open product-vs-internal split within `unresolved`) generalize to a second Pattern record remains the next real test — unchanged in kind from the standing next-falsification-step for `composition` itself, just now with one more field to stress-test.

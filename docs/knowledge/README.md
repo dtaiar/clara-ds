@@ -50,3 +50,12 @@ Whether these two fields are reusable beyond Input, or were only useful for this
 One more finding worth flagging explicitly: `origin` (see below) is not applied anywhere in `destructive-confirmation.json`, because no claim in it traces to a web-platform fact the way Input's placeholder/label claims did — its claims trace to product/UX reasoning instead. Whether that means `origin` needs a third value (e.g. distinguishing product/UX convention from web-platform fact), or Pattern records simply don't need `origin` at all, is recorded as unresolved in the record itself rather than decided here.
 
 None of this is proposed as a Pattern schema. It is one record, evaluated the same way Input was evaluated against Button: which fields generalized, which didn't, and what genuinely new shape was required.
+
+## `composition[].availability` — a second field the Explorer surfaced as a real need
+
+The Clara Explorer became a real consumer of `destructive-confirmation.json`'s `composition` field and needed to distinguish, per role, whether Clara currently provides enough capability to fulfill it — without parsing the free-text `component` field to infer that (e.g. matching on phrases like "no destructive variant exists yet"). Each `composition` row now also carries `availability: "available" | "missing"`, independent of the row's existing `status` field:
+
+- `status` — how established this row's guidance is (Pattern Knowledge's existing epistemic vocabulary: `hypothesis`/`unresolved`/etc.).
+- `availability` — whether an existing Clara capability is sufficient to fulfill this role **as the Pattern currently specifies it**. A base primitive existing is not enough on its own: Button exists, but neither the cancel nor the confirm/destructive role is marked `available`, because this Pattern's `actionHierarchy` specifies behavior (an easy/default cancel path, a visually distinguishable destructive path) that the existing Button alone does not guarantee.
+
+This is scoped narrowly to `destructive-confirmation.json`'s `composition` array, the same way `origin` was scoped narrowly to specific claims in `button.json`/`input.json` rather than applied everywhere. It is not proposed as a Pattern-wide or repository-wide field, is not accompanied by a schema, and whether it generalizes to a future Pattern record (or needs more than two values) is left open rather than decided here.

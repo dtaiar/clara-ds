@@ -94,6 +94,18 @@ export default defineConfig({
             value:
               "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
           },
+          // Added for the Explorer's Inspection Console direction: a second
+          // typeface role to distinguish human-facing interface language
+          // from literal machine-readable facts surfaced from Clara
+          // Knowledge (availability values, source paths, field names) —
+          // a human-interface representation choice, not a claim that
+          // agents themselves need monospace typography. Primitive-level
+          // only: no `textStyle` role is declared for it, consistent with
+          // `sans` having none before a real surface needed one.
+          mono: {
+            value:
+              "ui-monospace, 'SF Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace",
+          },
         },
         fontSizes: {
           sm: { value: "0.875rem" },

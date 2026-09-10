@@ -111,6 +111,14 @@ font.letterSpacing.*
 
 The final scale should be driven by the Explorer's typography needs rather than copied wholesale from another system.
 
+### Decision — `fonts.mono` primitive, for a human-interface distinction
+
+**Decided (implementation decision, not an ADR — see `.claude/skills/building-clara/SKILL.md`, decision threshold):** `fonts.mono` (a system monospace stack) is now declared under `theme.extend.tokens.fonts` in `app/panda.config.ts`, alongside `fonts.sans`.
+
+The demonstrated need: the Explorer's Inspection Console direction distinguishes human-facing interface language from literal machine-readable facts surfaced from Clara Knowledge — `composition[].availability` values, the Pattern's source file path, and structured field names. Rendering both in the same sans typeface left no visual signal that some of what's on screen is a direct, unmodified read of a JSON file and some is authored interface copy. This is a **human-interface representation choice**, not a claim that AI agents themselves need or benefit from monospace typography — agents consume the underlying JSON directly, not its rendered typography.
+
+Primitive-level only, matching how `fonts.sans` was introduced: no `textStyle` role is declared for `mono`, and no broad family of mono text styles was created. Consuming code applies `fontFamily: "mono"` directly at the few call sites that render a literal Knowledge value, the same way early call sites referenced `fonts.sans` primitives directly before any text style existed.
+
 ### Other primitives only when needed
 
 Possible future categories include shadow, duration, easing, size, border width, and breakpoint. They should not be added to v0.1 until the slice requires them.

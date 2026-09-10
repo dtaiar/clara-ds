@@ -1,5 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-panda-theme="explorer">
+  <!--
+    `explorer` is applied here, on <html>, rather than on an inner React
+    root: Panda's theme selector is a bare attribute selector
+    ([data-panda-theme="..."]), so it resolves correctly wherever the
+    attribute is placed, and putting it on the document root is what lets
+    `html`/`body` (declared in index.css) inherit the active theme's
+    surface/text custom properties too — see index.css and ADR-004. Still
+    the shipped visual expression, not a dev toggle (ADR-002/ADR-004): no
+    product control changes this attribute today.
+  -->
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

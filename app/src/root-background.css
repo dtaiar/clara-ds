@@ -1,0 +1,23 @@
+/* html/body sit outside the React tree, so they can't consume Panda's
+   `css()` utilities directly. They still need to resolve the active
+   theme's surface/text roles (as CSS custom properties, not a Clara
+   token reference) so that overscroll — above/below the app's own
+   `100vh` root — shows the theme's ground color instead of the
+   browser's white default. `data-panda-theme` lives on <html>
+   (index.html), so both elements inherit these custom properties from
+   the theme selector Panda already generates.
+
+   Kept in a separate file from index.css: Panda's PostCSS plugin
+   replaces index.css's `@layer reset, base, tokens, recipes, utilities;`
+   entry-point statement with its entire generated stylesheet, and
+   discards any other rule that file contains alongside it — observed
+   directly (built, inspected `dist/assets/*.css`) rather than assumed.
+   A separate file with no Panda entry-point statement passes through
+   untouched. Local/application presentation concern (ADR-004 does not
+   cover this), not a new Core abstraction. */
+html,
+body {
+  min-height: 100%;
+  background: var(--colors-surface-default);
+  color: var(--colors-text-primary);
+}

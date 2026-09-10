@@ -1,0 +1,111 @@
+{
+  "pattern": "Empty State — First Use",
+  "recordType": "pattern",
+  "recordStatus": "Experimental guidance; not validated in a product flow. The record structure is provisional.",
+  "slice": "01-intent-first-discovery",
+  "sourceOfTruth": {
+    "implementation": "none — no empty-collection product flow or EmptyState component has been built",
+    "explorerResult": "app/src/App.tsx imports and renders this JSON directly; the Explorer displays guidance, not the suggested product flow",
+    "sliceDefinition": "docs/slices/01-intent-first-discovery.md, Suggestion model",
+    "priorRecords": [
+      "docs/knowledge/destructive-confirmation.json"
+    ]
+  },
+  "demonstratedIntent": {
+    "status": "decision",
+    "value": "Show that there is no content yet",
+    "note": "Existing Slice 01 suggestion. Exact normalized match only. The generic phrase does not establish why content is absent; the first-use context below is an explicit assumption, not inferred user context."
+  },
+  "purpose": {
+    "status": "hypothesis",
+    "value": "Help someone understand why a collection has no items yet and what, if anything, they can do next."
+  },
+  "scopedScenario": {
+    "status": "hypothesis",
+    "value": "This example assumes a successfully loaded, unfiltered collection that the person can access, with no items created yet. Confirm this context before applying the guidance.",
+    "note": "Chosen experimental scenario under Daniel’s authorization to explore Empty State; the product recommendation remains a hypothesis."
+  },
+  "whenToUse": {
+    "status": "hypothesis",
+    "value": [
+      "The collection loaded successfully and contains no items yet.",
+      "The person is allowed to view the collection, and search or filters are not hiding existing items."
+    ]
+  },
+  "whenNotToUse": {
+    "status": "hypothesis",
+    "value": [
+      "Content is still loading or could not be loaded.",
+      "Search or filters returned no matches.",
+      "The person cannot access the collection, or items existed and were removed."
+    ]
+  },
+  "requiredContent": {
+    "status": "hypothesis",
+    "value": [
+      "Name what is missing in plain language, such as “No projects yet.”",
+      "Explain the available next step, or explain why there is currently no action the person can take."
+    ]
+  },
+  "actionAvailability": {
+    "status": "hypothesis",
+    "value": [
+      "If the person can create the first item, offer one clearly named action that opens that existing creation flow.",
+      "If the person cannot create an item, explain the constraint. Offer an alternative only when the product actually supports it; no action is a valid outcome."
+    ],
+    "note": "This is conditional product guidance, not a fixed requiredActions list. Permissions and creation capabilities belong to the consuming product, not Clara."
+  },
+  "stateDistinctions": [
+    {
+      "state": "Loading",
+      "guidance": "Do not conclude that a collection is empty before its result is known.",
+      "status": "hypothesis"
+    },
+    {
+      "state": "No search or filter results",
+      "guidance": "Explain that the current query has no matches and point to an available way to change it; do not imply the collection has no items.",
+      "status": "hypothesis"
+    },
+    {
+      "state": "Load failure",
+      "guidance": "Describe the failure and available recovery instead of claiming there is no content.",
+      "status": "hypothesis"
+    },
+    {
+      "state": "Access unavailable",
+      "guidance": "Explain the access constraint without implying that the collection is empty or offering an unavailable creation action.",
+      "status": "hypothesis"
+    }
+  ],
+  "composition": [
+    {
+      "role": "empty collection region",
+      "component": "Owned by the consuming product. No new Clara EmptyState container is needed to describe this guidance.",
+      "status": "hypothesis"
+    },
+    {
+      "role": "heading and explanation",
+      "component": "Existing heading and body text styles can express the content hierarchy.",
+      "status": "hypothesis"
+    },
+    {
+      "role": "conditional next action",
+      "component": "Existing Clara Button if the product provides an authorized creation action; otherwise omit the action. No new Button variant is proposed.",
+      "status": "hypothesis"
+    }
+  ],
+  "knownLimitations": {
+    "status": "decision",
+    "value": [
+      "This demonstration matches one phrase, not synonyms or a class of empty-state intents.",
+      "No real collection, permission check, creation action, or accessibility behavior is implemented by this Knowledge record.",
+      "Guidance is a product-design hypothesis, not observed usability evidence."
+    ]
+  },
+  "unresolved": [
+    "Can this guidance be applied correctly by a consumer who encounters a different reason for missing content?",
+    "Does actionAvailability generalize to other Patterns, or is this field specific to empty collections?",
+    "Should the generic intent first ask for context rather than show this explicitly scoped example?",
+    "What accessibility behavior is needed when a real collection changes from loading to empty or from empty to populated?"
+  ]
+}

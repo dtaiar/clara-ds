@@ -1,10 +1,10 @@
 # Clara Knowledge — experimental records
 
-**Status:** Experimental — third test of Clara Knowledge, still not a committed architecture.
+**Status:** Experimental — fourth test of Clara Knowledge, still not a committed architecture.
 
-`docs/architecture/overview.md` lists "how should Clara Knowledge be structured, and in which data format?" as an open question. This directory does not answer that question. It holds three real records — [`button.json`](./button.json), [`input.json`](./input.json), and [`destructive-confirmation.json`](./destructive-confirmation.json) — written to learn from actual consumption before any schema is proposed as a repository-wide standard.
+`docs/architecture/overview.md` lists "how should Clara Knowledge be structured, and in which data format?" as an open question. This directory does not answer that question. It holds four real records — [`button.json`](./button.json), [`input.json`](./input.json), [`destructive-confirmation.json`](./destructive-confirmation.json), and [`empty-state.json`](./empty-state.json) — written to learn from actual consumption before any schema is proposed as a repository-wide standard.
 
-Do not treat either record's shape as a template to copy for the next component without re-evaluating it. `input.json` reused most of `button.json`'s field shapes but also added two experimental fields with no Button equivalent — `valueOwnership` and `compositionDependencies` — because Input has real state ownership and context-dependent behavior (accessible name, Enter-to-submit) that Button's shape had no way to express honestly. See `docs/project/learning-log.md` for the full comparison. Two records show some fields generalize and some don't; that is evidence worth acting on, not yet enough to commit to a shared schema. Any such decision should be raised for human review.
+Do not treat any record's shape as a template to copy for the next component without re-evaluating it. `input.json` reused most of `button.json`'s field shapes but also added two experimental fields with no Button equivalent — `valueOwnership` and `compositionDependencies` — because Input has real state ownership and context-dependent behavior (accessible name, Enter-to-submit) that Button's shape had no way to express honestly. See `docs/project/learning-log.md` for the full comparison. Two records show some fields generalize and some don't; that is evidence worth acting on, not yet enough to commit to a shared schema. Any such decision should be raised for human review.
 
 ## Status / provenance values
 
@@ -28,9 +28,9 @@ The second Knowledge record surfaced a real instance of the gap above: `input.js
 
 Both records now carry an experimental `origin` field on the specific claims where this ambiguity was found — currently two values, `"clara"` (implied by the field's absence — the default) or `"web-platform"` (stated explicitly). It is applied narrowly, only to claims where a reader could otherwise mistake a platform fact for a Clara decision — not blanket-applied across every claim in either record. This is the smallest correction that fixed the specific misrepresentation found; it is not a proposal for a general provenance/origin taxonomy (external reference, product/slice, implementation, etc.), and whether two values are enough, or whether `origin` deserves the same treatment on claims where it wasn't applied, is left unresolved in `input.json`.
 
-## What's deliberately not here
+## Historical component-record scope
 
-Both records omit `antiPatterns`, `relatedComponents`, `examples`, and `compositionRules` — not because the schema forgot them, but because there still isn't real evidence for any of them (no eval loop has run, only two components exist to relate to each other, no built Explorer surface to draw examples from). Populating them now would be invented content presented as knowledge. See each record's own `unresolved` field.
+At the Button/Input milestone, the two component records omitted `antiPatterns`, `relatedComponents`, `examples`, and `compositionRules` — not because the schema forgot them, but because there still isn't real evidence for any of them (no eval loop has run, only two components exist to relate to each other, at that point, no built Explorer surface to draw examples from). Populating them now would be invented content presented as knowledge. See each record's own `unresolved` field.
 
 ## New field shapes introduced by `input.json`
 
@@ -50,3 +50,14 @@ Whether these two fields are reusable beyond Input, or were only useful for this
 One more finding worth flagging explicitly: `origin` (see below) is not applied anywhere in `destructive-confirmation.json`, because no claim in it traces to a web-platform fact the way Input's placeholder/label claims did — its claims trace to product/UX reasoning instead. Whether that means `origin` needs a third value (e.g. distinguishing product/UX convention from web-platform fact), or Pattern records simply don't need `origin` at all, is recorded as unresolved in the record itself rather than decided here.
 
 None of this is proposed as a Pattern schema. It is one record, evaluated the same way Input was evaluated against Button: which fields generalized, which didn't, and what genuinely new shape was required.
+
+## Second Pattern experiment — Empty State / First Use
+
+`empty-state.json` challenges the destructive-confirmation shape with an explicitly assumed first-use scenario: a successfully loaded, accessible, unfiltered collection with no items yet. The generic demonstrated phrase does not establish that context; the Explorer labels it as an assumption.
+
+- `purpose`, `whenToUse`, `whenNotToUse`, `requiredContent`, `composition`, and `unresolved` remain useful in this authoring pass.
+- Fixed cancel/confirm actions, `actionHierarchy`, `cancellationBehavior`, and `destructiveActionBehavior` do not apply and are omitted.
+- Experimental `actionAvailability` expresses that a product may provide a creation action or no action, depending on real permissions/capabilities.
+- Experimental `scopedScenario` and `stateDistinctions` distinguish the selected example from loading, no filter matches, failure, and unavailable access. These fields expose missing context instead of claiming the phrase resolves that ambiguity.
+
+App.tsx directly imports both JSON records. Each result renders its own fields; the similar field shapes have not become a shared public schema. Only the Explorer consumes the records so far. Two records do not demonstrate two consumers or prove that the guidance improves product outcomes. The UI labels the new record as experimental; this does not resolve how per-claim status should be presented across all Knowledge records.

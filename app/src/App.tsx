@@ -4,6 +4,7 @@ import { css } from "../styled-system/css";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
 import patternKnowledge from "../../docs/knowledge/destructive-confirmation.json";
+import emptyStateKnowledge from "../../docs/knowledge/empty-state.json";
 
 // Clara Explorer — first real product surface for Vertical Slice 01. See
 // docs/slices/01-intent-first-discovery.md for the surface definition and
@@ -17,20 +18,13 @@ const SUGGESTED_INTENTS = [
   "Confirm a risky action",
   "Help users recover from an error",
   "Collect payment information",
-  "Show that there is no content yet",
+  emptyStateKnowledge.demonstratedIntent.value,
 ];
 
-// Deterministic intent → Pattern mapping for exactly one demonstrated intent
-// (docs/slices/01-intent-first-discovery.md, "Example"). This is a fixed
-// demonstration, not search, ranking, or AI matching — see
-// docs/knowledge/destructive-confirmation.json's knownLimitations. Any other
-// intent falls through to the "no confident match" state below.
-//
-// `patternKnowledge` (imported above) is read directly from that JSON file —
-// it is the only source of the matched result's content. Nothing below
-// duplicates or paraphrases its field values; the JSX only selects which
-// fields to show and how to lay them out. See docs/project/learning-log.md
-// for the prior duplicated-constant approach this replaced and why.
+// Two fixed demonstrations, not search, ranking, or AI matching. Both
+// intents and result content come directly from their Knowledge records.
+// Unmatched input falls through explicitly. Each result keeps its own field
+// shape: this does not establish a universal Pattern schema or renderer.
 function normalizeIntent(value: string): string {
   return value.trim().toLowerCase().replace(/\.+$/, "");
 }
@@ -104,10 +98,15 @@ export function App() {
   }
 
   const trimmedSubmittedIntent = submittedIntent?.trim() ?? "";
-  const isKnownIntent =
+  const isDestructiveIntent =
     trimmedSubmittedIntent.length > 0 &&
     normalizeIntent(trimmedSubmittedIntent) ===
       normalizeIntent(patternKnowledge.demonstratedIntent.value);
+
+  const isEmptyStateIntent =
+    trimmedSubmittedIntent.length > 0 &&
+    normalizeIntent(trimmedSubmittedIntent) ===
+      normalizeIntent(emptyStateKnowledge.demonstratedIntent.value);
 
   return (
     <main
@@ -193,7 +192,7 @@ export function App() {
           </div>
 
           <div role="status" aria-live="polite" className={css({ width: "100%" })}>
-            {isKnownIntent && (
+            {isDestructiveIntent && (
               <div className={resultCardStyle}>
                 <span className={css({ textStyle: "supporting" })}>
                   Matched Pattern (fixed demonstration — not search)
@@ -269,15 +268,82 @@ export function App() {
               </div>
             )}
 
-            {submittedIntent !== null && trimmedSubmittedIntent.length > 0 && !isKnownIntent && (
+            {isEmptyStateIntent && (
+              <div className={resultCardStyle}>
+                <span className={css({ textStyle: "supporting" })}>
+                  Matched Pattern (fixed demonstration — not search)
+                </span>
+                <h2 className={css({ textStyle: "heading" })}>
+                  {emptyStateKnowledge.pattern}
+                </h2>
+                <p className={css({ textStyle: "supporting" })}>
+                  {emptyStateKnowledge.recordStatus}
+                </p>
+                <p className={css({ textStyle: "body" })}>
+                  {emptyStateKnowledge.purpose.value}
+                </p>
+                <strong className={css({ textStyle: "label" })}>
+                  Example context — assumption
+                </strong>
+                <p className={css({ textStyle: "body" })}>
+                  {emptyStateKnowledge.scopedScenario.value}
+                </p>
+                {[
+                  { heading: "When to use", field: emptyStateKnowledge.whenToUse },
+                  { heading: "When not to use", field: emptyStateKnowledge.whenNotToUse },
+                  { heading: "Required content", field: emptyStateKnowledge.requiredContent },
+                  { heading: "Available action", field: emptyStateKnowledge.actionAvailability },
+                ].map(({ heading, field }) => (
+                  <section key={heading}>
+                    <h3 className={css({ textStyle: "label", fontWeight: "bold" })}>
+                      {heading}
+                    </h3>
+                    <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                      {field.value.map((line) => <li key={line}>{line}</li>)}
+                    </ul>
+                  </section>
+                ))}
+                <h3 className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Distinguish from
+                </h3>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {emptyStateKnowledge.stateDistinctions.map((item) => (
+                    <li key={item.state}><strong>{item.state}:</strong> {item.guidance}</li>
+                  ))}
+                </ul>
+                <h3 className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Recommended composition
+                </h3>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {emptyStateKnowledge.composition.map((item) => (
+                    <li key={item.role}><strong>{item.role}:</strong> {item.component}</li>
+                  ))}
+                </ul>
+                <h3 className={css({ textStyle: "label", fontWeight: "bold" })}>
+                  Explicitly unresolved
+                </h3>
+                <ul className={css({ textStyle: "supporting", paddingLeft: "4" })}>
+                  {emptyStateKnowledge.unresolved.map((line) => <li key={line}>{line}</li>)}
+                </ul>
+                <span className={css({ textStyle: "supporting" })}>
+                  Source: docs/knowledge/empty-state.json
+                </span>
+              </div>
+            )}
+
+            {submittedIntent !== null && trimmedSubmittedIntent.length > 0 && !isDestructiveIntent && !isEmptyStateIntent && (
               <div className={resultCardStyle}>
                 <p className={css({ textStyle: "body" })}>
                   Clara doesn't have a confident match for "{submittedIntent}" yet.
                 </p>
                 <p className={css({ textStyle: "supporting" })}>
-                  This experiment only resolves one demonstrated intent:
-                  &nbsp;"{patternKnowledge.demonstratedIntent.value}"
+                  This experiment only resolves these demonstrated intents:
                 </p>
+                <ul className={css({ textStyle: "body", paddingLeft: "4" })}>
+                  {[patternKnowledge.demonstratedIntent.value, emptyStateKnowledge.demonstratedIntent.value].map((value) => (
+                    <li key={value}>{value}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

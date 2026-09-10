@@ -1,0 +1,41 @@
+{
+  "environment": "Node + jsdom 26.1.0; production bundle; no visual or keyboard validation",
+  "checks": [
+    {
+      "name": "Initial result region is empty",
+      "result": "pass"
+    },
+    {
+      "name": "Existing suggestion fills intent from Knowledge",
+      "result": "pass"
+    },
+    {
+      "name": "Empty State displays its assumption, limitations and conditional actions",
+      "result": "pass"
+    },
+    {
+      "name": "Normalized Empty State phrase matches",
+      "result": "pass"
+    },
+    {
+      "name": "Existing destructive result replaces Empty State",
+      "result": "pass"
+    },
+    {
+      "name": "Unsupported intent clears both results and lists both demonstrations",
+      "result": "pass"
+    },
+    {
+      "name": "Generic risky action still does not overmatch",
+      "result": "pass"
+    },
+    {
+      "name": "Whitespace submit clears the prior result",
+      "result": "pass"
+    },
+    {
+      "name": "Bundle produced no captured DOM runtime errors",
+      "result": "pass"
+    }
+  ]
+}

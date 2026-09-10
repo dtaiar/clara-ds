@@ -1,6 +1,6 @@
 # Vertical Slice 01 — Intent-first Discovery
 
-**Status:** Defined / ready for exploration  
+**Status:** In progress — two fixed Explorer demonstrations; machine consumption and evaluation pending
 **Version:** 0.1  
 **Owner:** Daniel  
 **Date:** 2026-09-08
@@ -158,6 +158,12 @@ This slice should eventually demonstrate that the same Clara knowledge can suppo
 
 The experiment does not need to prove that Clara always finds the correct answer. Failures are useful if they reveal where the system's knowledge, structure, or discovery interface is insufficient.
 
-## Next decision
+## Initial next decision (historical)
 
 Define Clara's **minimum foundation model** for this slice: which tokens are primitive, which roles are semantic, and which values belong to a Theme rather than Core.
+
+## Current checkpoint — 2026-09-10
+
+The Explorer reads Destructive Confirmation and Empty State / First Use directly from their experimental Knowledge records. Matching supports one normalized phrase per record; general intent discovery is not implemented. The Empty State example explicitly discloses its assumed context.
+
+Foundations and the first component contracts have been implemented incrementally. See `docs/project/learning-log.md` for the observations and validation limits. The next unresolved end-to-end step is machine consumption of the same knowledge followed by a scoped evaluation; two records in the Explorer still represent one consumer.

@@ -295,3 +295,7 @@ No schema was introduced for `availability`. No third value (e.g. `undecided`) w
 ### Next falsification step
 
 Whether `availability` (and the still-open product-vs-internal split within `unresolved`) generalize to a second Pattern record remains the next real test — unchanged in kind from the standing next-falsification-step for `composition` itself, just now with one more field to stress-test.
+
+## 2026-09-10 — Agent Knowledge Discovery evidence preserved
+
+Two exploratory tests with fresh, unfamiliar AI-agent sessions — run against `docs/knowledge/destructive-confirmation.json` after it existed, each given only a plain product-intent sentence and no Clara vocabulary or file location — previously existed only in experiment transcripts. That evidence is now recorded at `docs/evidence/agent-knowledge-discovery/README.md`: both sessions located and reasoned from the same Knowledge record the human Explorer consumes, distinguished repository-supported claims from their own inference, and did not invent missing Clara capabilities — but both also relied materially on repository structure and descriptive naming rather than demonstrating general semantic retrieval, which the record states explicitly as a limitation, not a caveat to minimize.
